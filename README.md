@@ -2,6 +2,9 @@
 
 // In contract Address from openzepellin l.185 delegatecall commented
 
+# WIP
+[] - Fix getReward() & updateReward() so that the calculation avoids overflow / bugs
+
 
 # DefiLP Contract
 The DefiLP contract is a decentralized finance (DeFi) liquidity pool contract that allows users to deposit and earn returns on their deposited assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
