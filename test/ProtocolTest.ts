@@ -51,7 +51,7 @@ describe("Deployment of Defi.Finance Protocol", async () => {
 
     [otherAccount,] = await ethers.getSigners();
     owner = await getImpersonatedSigner("0xd5c08681719445a5fdce2bda98b341a49050d821");
-    console.log("admin address is", owner.address);
+    // console.log("admin address is", owner.address);
 
     usdcPolygon = await ethers.getContractAt(IERC20, usdc_polygon_address);
     // Defi Token
@@ -61,7 +61,7 @@ describe("Deployment of Defi.Finance Protocol", async () => {
       [owner.address],
       { initializer: 'initialize', kind: 'uups' }
     );
-    console.log("DefiToken upgradable deployed to:", DToken.address);
+    // console.log("DefiToken upgradable deployed to:", DToken.address);
 
 
     // Liquidity Handler
@@ -72,7 +72,7 @@ describe("Deployment of Defi.Finance Protocol", async () => {
       { initializer: 'initialize', kind: 'uups' }
     );
 
-    console.log("Handler upgradable deployed to:", handler.address);
+    // console.log("Handler upgradable deployed to:", handler.address);
 
     const IBToken = await ethers.getContractFactory("DefiLP");
 
@@ -81,7 +81,7 @@ describe("Deployment of Defi.Finance Protocol", async () => {
       { initializer: 'initialize', kind: 'uups' }
     );
 
-    console.log("Handler upgradable deployed to:", handler.address);
+    // console.log("Handler upgradable deployed to:", handler.address);
 
     handler.connect(owner).addToken(IbUsdc.address);
     handler.connect(owner).grantRole(handler.DEFAULT_ADMIN_ROLE(), IbUsdc.address);
@@ -105,19 +105,21 @@ describe("Deployment of Defi.Finance Protocol", async () => {
   it("Should check user claimable reward", async () => {
         // Conversion de l'APR en taux d'intérêt journalier
         let aprSeconds = (10 / 365) / 86400;
-  
+        let apr2 = 10/365/24/60/60;
 
         console.log("RETURNED APR / SEC", aprSeconds)
-    console.log("returned claimable bal initial skip days => ", await IbUsdc.getReward(owner.address));
+        console.log("RETURNED APR / SEC", apr2)
+
+    console.log("reward after 0days => ", await IbUsdc.getReward(owner.address));
 
   // advance time by one hour and mine a new block
     // await time.increase(3000000);
     await skipDays(30);
 
-    console.log("returned claimable bal before skip days => ", await IbUsdc.getReward(owner.address));
+    console.log("reward after 30days => ", await IbUsdc.getReward(owner.address));
 
     await skipDays(30);
-    console.log("returned claimable bal after skip days => ", ethers.utils.formatUnits(await IbUsdc.getReward(owner.address), 18));
+    console.log("reward after 60days => ", ethers.utils.formatUnits(await IbUsdc.getReward(owner.address), 6));
 
     let maxClaim = await IbUsdc.getReward(owner.address);
     await IbUsdc.connect(owner).requestRewards(maxClaim);

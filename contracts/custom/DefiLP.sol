@@ -91,6 +91,16 @@ contract DefiLP is
         _disableInitializers();
     }
 
+    /**
+    * function to initialize the contract
+    * @param _name the name of the token
+    * @param _symbol the symbol of the token
+    * @param _underlying_address the address of the underlying token
+    * @param _multiSigWallet the address of the multisig wallet associated with the contract
+    * @param _handler the address of the liquidity handler contract
+    * @param _annualInterest the annual interest rate for the contract
+    * @param _trustedForwarder the address of the trusted forwarder
+    */
     function initialize(
         string memory _name,
         string memory _symbol,
@@ -112,57 +122,38 @@ contract DefiLP is
         // _grantRole(MINTER_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, _multiSigWallet);
  
-        annualInterest = _annualInterest;
+        annualInterest = 10;
         stakeTokenAddress = _underlying_address;
         updateTimeLimit = 60;
         liquidityHandler = _handler;
         trustedForwarder = _trustedForwarder;
     }
 
-        function getReward(address _userAddr) external view returns (uint256 claimableBal_) {
+    function getReward(address _userAddr) external view returns (uint256 claimableBal_) {
             uint256 elapsedTime = block.timestamp - user_data[_userAddr].last_action_time;
-            uint256 rewardAmount = (annualInterest * balanceOf(_userAddr) * elapsedTime) / 10**(decimals());
-            
-            claimableBal_ = rewardAmount * 10**(18 - decimals());
+            // uint256 annualInterestDecimal = 0.1; 
+            claimableBal_ = (balanceOf(_userAddr) * annualInterest * elapsedTime) / (365 * 24 * 60 * 60);
     }
 
-    /// @notice  Updates the user's claimable reward balance
+    /// @notice  Updates the user's claimable reward balance every time a user make an action
     /// @dev 
 
     function updateReward(address _userAddr) internal {
         if (block.timestamp >= user_data[_userAddr].last_action_time + updateTimeLimit) {
             // Calculer la rémunération accumulée de l'utilisateur en fonction du temps écoulé depuis sa dernière action et de son total stacked
             uint256 elapsedTime = block.timestamp - user_data[_userAddr].last_action_time;
-            uint256 rewardAmount = (annualInterest * balanceOf(_userAddr) * elapsedTime) / 10**(decimals());
-            
-            uint256 amountIn18 = rewardAmount * 10**(18 - decimals());
+            uint256 rewardAmount = (balanceOf(_userAddr) * annualInterest * elapsedTime) / (365 * 24 * 60 * 60);
+            // uint256 amountIn6 = rewardAmount * 1e6;
+            // uint256 amountIn18 = amountIn6 * 10**(18 - decimals());
+
             // Update User Datas
             user_data[_userAddr].last_action_time = block.timestamp;
-            user_data[_userAddr].bal_claimable += amountIn18;
-            user_data[_userAddr].bal_total_earned += amountIn18;
+            user_data[_userAddr].bal_claimable += rewardAmount;
+            user_data[_userAddr].bal_total_earned += rewardAmount;
         }
         else 
             return;
     }
-
-
-//     function updateReward(address _userAddr) internal {
-//     if (block.timestamp >= user_data[_userAddr].last_action_time + updateTimeLimit) {
-//         // Calculer la rémunération accumulée de l'utilisateur en fonction du temps écoulé depuis sa dernière action et de son total stacked
-//         uint256 elapsedTime = block.timestamp - user_data[_userAddr].last_action_time;
-//         uint256 rewardAmount = (annualInterest * balanceOf(_userAddr) * elapsedTime) / 1e18;
-
-//         // Prendre en compte la différence de décimaux entre le token de stake et le token de récompense
-//         uint256 rewardAmountWithDecimals = rewardAmount * 10**(18 - 6);
-
-//         // Update User Datas
-//         user_data[_userAddr].last_action_time = block.timestamp;
-//         user_data[_userAddr].bal_claimable += rewardAmountWithDecimals;
-//         user_data[_userAddr].bal_total_earned += rewardAmountWithDecimals;
-//     }
-//     else 
-//         return;
-// }
 
     /// @notice  Deposit user assets and mint IbToken.
     /// @dev When called, asset token is sent to the LiquidityHandler, then the reward is updated, and token minted
@@ -172,8 +163,8 @@ contract DefiLP is
         require(_amount > 0, "IBToken : Invalid amount");
         // uint256 priceInWei = _amount * (10 ** decimals());
         IERC20Upgradeable(stakeTokenAddress).safeTransferFrom(msg.sender,address(liquidityHandler),_amount);
-        updateReward(msg.sender);
         
+        updateReward(msg.sender);
         // claim potential reward for protocol if theres any
         // ILiquidityHandler(liquidityHandler).deposit(1, stakeTokenAddress); // protocol / token to claim
      
