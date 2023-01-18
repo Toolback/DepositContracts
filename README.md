@@ -1,10 +1,10 @@
 # Important 
 
-In Address from openzepellin l.185 delegatecall
+// In contract Address from openzepellin l.185 delegatecall commented
 
 
 # DefiLP Contract
-The DefiLP contract is a decentralized finance (DeFi) liquidity pool contract that allows users to deposit and earn returns on their deposited assets. It is implemented using the Solidity programming language and is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
+The DefiLP contract is a decentralized finance (DeFi) liquidity pool contract that allows users to deposit and earn returns on their deposited assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
 
 ## Features
 The DefiLP contract has the following features:
@@ -36,13 +36,8 @@ depositTokenStatus: This function allows an authorized party to enable or disabl
 
 setAnnualInterest: This function allows an authorized party to set the annual interest rate for the liquidity pool.
 
-Diagram
-The following diagram illustrates the flow of assets and functions in the DefiLP contract:
-
-[Insert diagram here]
-
 # LiquidityHandler Contract
-The LiquidityHandler contract is a contract that handles liquidity for a decentralized finance (DeFi) platform, allowing users to deposit and withdraw assets. It is implemented using the Solidity programming language and is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
+The LiquidityHandler contract is a contract that handles liquidity, allowing users to deposit and withdraw assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
 
 ## Features
 The LiquidityHandler contract has the following features:
@@ -65,8 +60,3 @@ withdraw: This function allows users to withdraw their deposited assets.
 addIbToken: This function allows an authorized party to add a new ERC20 token to the list of deployed tokens.
 
 removeIbToken: This function allows an authorized party to remove an ERC20 token from the list of deployed tokens.
-
-Diagram
-The following diagram illustrates the flow of assets and functions in the LiquidityHandler contract:
-
-[Insert diagram here]
