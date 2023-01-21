@@ -168,8 +168,6 @@ contract DefiLP is
         // claim potential reward for protocol if theres any
         // ILiquidityHandler(liquidityHandler).deposit(1, stakeTokenAddress); // protocol / token to claim
      
-        // TODO : is it necessary to rebase tokens decimals to correct underlying decimals ?
-        // uint256 amountIn18 = _amount * 10**(18 - DefiERC20(stakeTokenAddress).decimals());
         _mint(msg.sender, _amount);
       
         // emit TransferAssetValue(address(0), _msgSender(), _amount, amountIn18);
