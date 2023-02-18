@@ -200,6 +200,11 @@ contract D_Pool_SingleReward is
             rewardsToken.transfer(msg.sender, reward);
         }
     }
+
+    function getStakeBalance(address _account) public view returns (uint) {
+        return balanceOf[_account];
+    }
+    
     function getRewardBalance(address _account) public view returns (uint) {
         return balanceOf[_account] * (
             (rewardPerToken() - userRewardPerTokenPaid[_account]) / 1e18
