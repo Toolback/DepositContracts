@@ -5,19 +5,21 @@ import { ethers, upgrades } from "hardhat"
 import { Contract } from "ethers";
 import { parseEther, parseUnits } from "@ethersproject/units";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-const IERC20 = require ("../ERC20Abi.json")
+const IERC20 = require("../ERC20Abi.json")
 var assert = require('chai').assert
 
 const usdc_polygon_address = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
 
 const gnosis = "0x25b3d91e2cbAe2397749f2F9A5598366Df26fA49";
-let owner:SignerWithAddress , otherAccount:SignerWithAddress;
+let owner: SignerWithAddress, otherAccount: SignerWithAddress;
 
 let handler: Contract;
 let pool_usdc: Contract;
 let defiToken: Contract;
 let usdcPolygon: any;
 
+let initialBalance: String;
+let onGoingBal: String;
 async function getImpersonatedSigner(address: string): Promise<SignerWithAddress> {
   await ethers.provider.send(
     'hardhat_impersonateAccount',
@@ -90,16 +92,16 @@ describe("Deployment of Defi.Finance Protocol", async () => {
 
 
   describe("--> Test Started", async () => {
-  it("Admin should deposit Defi Token to UsdcPool for claimable staking reward", async () => {
-    await defiToken.connect(owner).transfer(pool_usdc.address, parseEther("1000000"))
-    expect(ethers.utils.formatUnits((await defiToken.balanceOf(pool_usdc.address)).toString(), 18)).to.be.equal("1000000.0");
-  });
-  
-  it("Admin should set reward duration", async () => {
-    // 10 days of distribution
-    await pool_usdc.connect(owner).setRewardsDuration(864000)
-    // expect(ethers.utils.formatUnits((await pool_usdc.balanceOf(handler.address)).toString(), 18)).to.be.equal("1000000.0");
-  });
+    it("Admin should deposit Defi Token to UsdcPool for claimable staking reward", async () => {
+      await defiToken.connect(owner).transfer(pool_usdc.address, parseEther("1000000"))
+      expect(ethers.utils.formatUnits((await defiToken.balanceOf(pool_usdc.address)).toString(), 18)).to.be.equal("1000000.0");
+    });
+
+    it("Admin should set reward duration", async () => {
+      // 10 days of distribution
+      await pool_usdc.connect(owner).setRewardsDuration(864000)
+      // expect(ethers.utils.formatUnits((await pool_usdc.balanceOf(handler.address)).toString(), 18)).to.be.equal("1000000.0");
+    });
     it("Admin should set reward quantity", async () => {
       // 1.000.000 on 10 days
       await pool_usdc.connect(owner).notifyRewardAmount(parseEther("1000000"))
@@ -107,40 +109,50 @@ describe("Deployment of Defi.Finance Protocol", async () => {
     });
 
 
-  it("User should be able to deposit asset", async () => {
-    await usdcPolygon.connect(owner).approve(pool_usdc.address, (100 * 10 ** 6))
-    await pool_usdc.connect(owner).deposit(100 * 10 ** 6);
-    // expect((await usdcPolygon.balanceOf(owner.address)).toString()).to.be.equal(ethers.utils.parseUnits("100", 6))
-  });
+    it("User should be able to deposit asset", async () => {
+      initialBalance = ethers.utils.formatUnits(await usdcPolygon.balanceOf(owner.address), 6);
+      await usdcPolygon.connect(owner).approve(pool_usdc.address, (100 * 10 ** 6))
+      await pool_usdc.connect(owner).deposit(100 * 10 ** 6);
+      onGoingBal = ethers.utils.formatUnits(await usdcPolygon.balanceOf(owner.address), 6);
 
-  it("Should check user claimable reward", async () => {
-        // Conversion de l'APR en taux d'intérêt journalier
+      // expect((await usdcPolygon.balanceOf(owner.address)).toString()).to.be.equal(ethers.utils.parseUnits("100", 6))
+    });
+
+    it("Should check user claimable reward", async () => {
+      // Conversion de l'APR en taux d'intérêt journalier
 
 
-    console.log("reward after 0days => ", await pool_usdc.getRewardBalance(owner.address));
+      console.log("reward after 0days => ", ethers.utils.formatUnits(await pool_usdc.getRewardBalance(owner.address), 18));
 
-  // advance time by one hour and mine a new block
-    // await time.increase(3000000);
-    await skipDays(30);
+      // advance time by one hour and mine a new block
+      // await time.increase(3000000);
+      await skipDays(2);
 
-    console.log("reward after 30days => ", await pool_usdc.getRewardBalance(owner.address));
+      console.log("reward after 2days => ", ethers.utils.formatUnits(await pool_usdc.getRewardBalance(owner.address), 18));
 
-    await skipDays(30);
-    console.log("reward after 60days => ", ethers.utils.formatUnits(await pool_usdc.getRewardBalance(owner.address), 6));
+      await skipDays(2);
+      console.log("reward after 4days => ", ethers.utils.formatUnits(await pool_usdc.getRewardBalance(owner.address), 18));
+      await skipDays(15);
 
-    // let maxClaim = await pool_usdc.getRewardBalance(owner.address);
-    await pool_usdc.connect(owner).claimReward();
-    
-    console.log("returned claim bal => ", await defiToken.balanceOf(owner.address));
-    
-    await pool_usdc.connect(owner).withdraw(100 * 10 ** 6);
-    console.log("final claimed bal => ", ethers.utils.formatUnits(await defiToken.balanceOf(owner.address), 18));
+      // let maxClaim = await pool_usdc.getRewardBalance(owner.address);
+      await pool_usdc.connect(owner).claimReward();
 
-    // expect(ethers.utils.formatUnits((await DToken.balanceOf(handler.address)).toString(), 18)).to.be.equal("1000000.0");
-  });
-  
+      console.log("returned claim bal => ", await defiToken.balanceOf(owner.address));
+      console.log("------------------------------------");
+
+      await pool_usdc.connect(owner).withdraw(100 * 10 ** 6);
+      console.log("initial USDC bal => ", initialBalance);
+      console.log("ongoing USDC Balance (staking)  => ", onGoingBal);
+      console.log("final USDC bal => ", ethers.utils.formatUnits(await usdcPolygon.balanceOf(owner.address), 6));
+      
+      console.log("final Defi earned bal => ", ethers.utils.formatUnits(await defiToken.balanceOf(owner.address), 18));
+      console.log("------------------------------------");
+
+      // expect(ethers.utils.formatUnits((await DToken.balanceOf(handler.address)).toString(), 18)).to.be.equal("1000000.0");
+    });
+
   })
-  
+
 });
 
 

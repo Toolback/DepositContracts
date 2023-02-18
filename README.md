@@ -37,7 +37,7 @@ setRewardsDuration: allow admins to increase duration of an ongoing reward, or s
 
 notifyRewardAmount: allow admins to increase amount of reward token, or set a new reward
 
-setLiquidityHandler: This function allows admins to set the contract responsible for distributing money between the pool and the wallet.
+setLiquidityHandler: This function allows admins to set the contract responsible for distributing money between the pool and the strategy.
 
 setTrustedForwarder: This function allows admins to set the trusted forwarder address, which is used to perform certain actions on behalf of the contract.
 
