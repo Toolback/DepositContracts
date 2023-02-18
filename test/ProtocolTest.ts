@@ -13,10 +13,9 @@ const usdc_polygon_address = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
 const gnosis = "0x25b3d91e2cbAe2397749f2F9A5598366Df26fA49";
 let owner:SignerWithAddress , otherAccount:SignerWithAddress;
 
-let hub: Contract;
 let handler: Contract;
-let IbUsdc: Contract;
-let DToken: Contract;
+let pool_usdc: Contract;
+let defiToken: Contract;
 let usdcPolygon: any;
 
 async function getImpersonatedSigner(address: string): Promise<SignerWithAddress> {
@@ -57,79 +56,85 @@ describe("Deployment of Defi.Finance Protocol", async () => {
     // Defi Token
     const DefiToken = await ethers.getContractFactory("DefiToken");
 
-    DToken = await upgrades.deployProxy(DefiToken,
+    defiToken = await upgrades.deployProxy(DefiToken,
       [owner.address],
       { initializer: 'initialize', kind: 'uups' }
     );
-    // console.log("DefiToken upgradable deployed to:", DToken.address);
+    // console.log("defiToken upgradable deployed to:", defiToken.address);
 
 
     // Liquidity Handler
     const Handler = await ethers.getContractFactory("LiquidityHandler");
 
     handler = await upgrades.deployProxy(Handler,
-      [owner.address, DToken.address],
+      [owner.address, defiToken.address],
       { initializer: 'initialize', kind: 'uups' }
     );
 
     // console.log("Handler upgradable deployed to:", handler.address);
 
-    const IBToken = await ethers.getContractFactory("DefiLP");
+    const UsdcPool = await ethers.getContractFactory("D_Pool_SingleReward");
 
-    IbUsdc = await upgrades.deployProxy(IBToken,
-      ["IbUsdc", "IbUsdc", usdc_polygon_address, owner.address, handler.address, 10, owner.address],
+    pool_usdc = await upgrades.deployProxy(UsdcPool,
+      [usdc_polygon_address, defiToken.address, owner.address, handler.address, owner.address],
       { initializer: 'initialize', kind: 'uups' }
     );
 
     // console.log("Handler upgradable deployed to:", handler.address);
 
-    handler.connect(owner).addToken(IbUsdc.address);
-    handler.connect(owner).grantRole(handler.DEFAULT_ADMIN_ROLE(), IbUsdc.address);
-    expect((await handler.getDeployedTokens())[0]).to.be.equal(IbUsdc.address)
+    handler.connect(owner).addPool(pool_usdc.address);
+    handler.connect(owner).grantRole(handler.DEFAULT_ADMIN_ROLE(), pool_usdc.address);
+    expect((await handler.getDeployedPools())[0]).to.be.equal(pool_usdc.address)
 
   });
 
 
   describe("--> Test Started", async () => {
-  it("Admin should deposit Gov Token to Liquidity Handler for claimable staking reward", async () => {
-    await DToken.connect(owner).transfer(handler.address, parseEther("1000000"))
-    expect(ethers.utils.formatUnits((await DToken.balanceOf(handler.address)).toString(), 18)).to.be.equal("1000000.0");
+  it("Admin should deposit Defi Token to UsdcPool for claimable staking reward", async () => {
+    await defiToken.connect(owner).transfer(pool_usdc.address, parseEther("1000000"))
+    expect(ethers.utils.formatUnits((await defiToken.balanceOf(pool_usdc.address)).toString(), 18)).to.be.equal("1000000.0");
   });
+  
+  it("Admin should set reward duration", async () => {
+    // 10 days of distribution
+    await pool_usdc.connect(owner).setRewardsDuration(864000)
+    // expect(ethers.utils.formatUnits((await pool_usdc.balanceOf(handler.address)).toString(), 18)).to.be.equal("1000000.0");
+  });
+    it("Admin should set reward quantity", async () => {
+      // 1.000.000 on 10 days
+      await pool_usdc.connect(owner).notifyRewardAmount(parseEther("1000000"))
+      // expect(ethers.utils.formatUnits((await pool_usdc.balanceOf(handler.address)).toString(), 18)).to.be.equal("1000000.0");
+    });
 
-  it("User should be able to deposit underlying and mint LPToken", async () => {
-    await usdcPolygon.connect(owner).approve(IbUsdc.address, (100 * 10 ** 6))
-    await IbUsdc.connect(owner).deposit(100 * 10 ** 6);
-    expect((await IbUsdc.balanceOf(owner.address)).toString()).to.be.equal(ethers.utils.parseUnits("100", 6))
+
+  it("User should be able to deposit asset", async () => {
+    await usdcPolygon.connect(owner).approve(pool_usdc.address, (100 * 10 ** 6))
+    await pool_usdc.connect(owner).deposit(100 * 10 ** 6);
+    // expect((await usdcPolygon.balanceOf(owner.address)).toString()).to.be.equal(ethers.utils.parseUnits("100", 6))
   });
 
   it("Should check user claimable reward", async () => {
         // Conversion de l'APR en taux d'intérêt journalier
-        let aprSeconds = (10 / 365) / 86400;
-        let apr2 = 10/365/24/60/60;
 
-        console.log("RETURNED APR / SEC", aprSeconds)
-        console.log("RETURNED APR / SEC", apr2)
 
-    console.log("reward after 0days => ", await IbUsdc.getReward(owner.address));
+    console.log("reward after 0days => ", await pool_usdc.getRewardBalance(owner.address));
 
   // advance time by one hour and mine a new block
     // await time.increase(3000000);
     await skipDays(30);
 
-    console.log("reward after 30days => ", await IbUsdc.getReward(owner.address));
+    console.log("reward after 30days => ", await pool_usdc.getRewardBalance(owner.address));
 
     await skipDays(30);
-    console.log("reward after 60days => ", ethers.utils.formatUnits(await IbUsdc.getReward(owner.address), 6));
+    console.log("reward after 60days => ", ethers.utils.formatUnits(await pool_usdc.getRewardBalance(owner.address), 6));
 
-    let maxClaim = await IbUsdc.getReward(owner.address);
-    await IbUsdc.connect(owner).requestRewards(maxClaim);
+    // let maxClaim = await pool_usdc.getRewardBalance(owner.address);
+    await pool_usdc.connect(owner).claimReward();
     
-    console.log("returned claim bal => ", await DToken.balanceOf(owner.address));
+    console.log("returned claim bal => ", await defiToken.balanceOf(owner.address));
     
-    console.log("before final lp bal => ", ethers.utils.formatUnits(await IbUsdc.balanceOf(owner.address), 6));
-    await IbUsdc.connect(owner).withdrawTo(owner.address, 100 * 10 ** 6);
-    console.log("final lp bal => ", ethers.utils.formatUnits(await IbUsdc.balanceOf(owner.address), 6));
-    console.log("final claimed bal => ", ethers.utils.formatUnits(await DToken.balanceOf(owner.address), 18));
+    await pool_usdc.connect(owner).withdraw(100 * 10 ** 6);
+    console.log("final claimed bal => ", ethers.utils.formatUnits(await defiToken.balanceOf(owner.address), 18));
 
     // expect(ethers.utils.formatUnits((await DToken.balanceOf(handler.address)).toString(), 18)).to.be.equal("1000000.0");
   });

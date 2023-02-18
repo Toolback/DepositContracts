@@ -176,12 +176,15 @@ contract D_Pool_SingleReward is
 
     function withdraw(uint256 _amount) public updateReward(msg.sender) {
         // uint256 adjustedAmount = _amount * 10**(18 - decimals());
+        require(balanceOf[msg.sender] >= _amount, "amount too hight / balance too low");
         ILiquidityHandler handler = ILiquidityHandler(liquidityHandler);
         handler.withdraw(
             msg.sender,
             address(stakingToken),
             _amount
         );
+        balanceOf[msg.sender] -= _amount;
+        totalSupply -= _amount;
 
         // emit TransferAssetValue(_msgSender(), address(0), _amount);
         // emit BurnedForWithdraw(_msgSender(), _amount);
@@ -190,19 +193,6 @@ contract D_Pool_SingleReward is
     // / @notice  Claim reward earned by stacking assets
     // / @dev 
     // / @param _amount Amount to withdraw
-
-    // function requestRewards(uint256 _amount) external {
-    //     updateReward(msg.sender);
-    //     // uint256 priceInWei = _amount * (10 ** decimals());
-    //     require(user_data[msg.sender].bal_claimable >= _amount, "Not Enough Funds");
-        
-    //     ILiquidityHandler handler = ILiquidityHandler(liquidityHandler);
-    //     handler.claimUserReward(
-    //         msg.sender,
-    //         _amount
-    //     );
-    //     user_data[msg.sender].bal_claimable -= _amount;
-    // }
 
     function claimReward() external updateReward(msg.sender) {
         uint reward = rewards[msg.sender];
@@ -216,21 +206,13 @@ contract D_Pool_SingleReward is
             (rewardPerToken() - userRewardPerTokenPaid[_account]) / 1e18
         ) + rewards[_account];
     }
-    //     return
-    //         ((balanceOf[_account] *
-    //             (rewardPerToken(_tokenIndex) - userRewardPerTokenPaid[_account][_tokenIndex])) / 1e18) +
-    //         rewards[_account][_tokenIndex];
-    // }
 
     function setRewardsDuration(uint _duration) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(finishAt < block.timestamp, "reward duration not finished");
         duration = _duration;
     }
 
-    function notifyRewardAmount(
-        uint _amount
-
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) updateReward(address(0)) {
+    function notifyRewardAmount(uint _amount) external onlyRole(DEFAULT_ADMIN_ROLE) updateReward(address(0)) {
         if (block.timestamp >= finishAt) {
             rewardRate = _amount / duration;
         } else {

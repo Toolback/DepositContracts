@@ -11,8 +11,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
-// import "./interfaces/IIbDeepFy.sol";
-// import "../interfaces/IExchange.sol";
+// import "./interfaces/IBDeepfy.sol";
 import "hardhat/console.sol";
 
 contract LiquidityHandler is
@@ -34,7 +33,7 @@ contract LiquidityHandler is
     address public defiToken;
 
     // list of deployed IbTokens
-    EnumerableSetUpgradeable.AddressSet private deployedTokens;
+    EnumerableSetUpgradeable.AddressSet private deployedPools;
 
     // struct Withdrawal {
     //     // address of user that did withdrawal
@@ -75,13 +74,13 @@ contract LiquidityHandler is
         defiToken = _defiToken;
     }
 
-    modifier onlyIbToken(address _sender)
+    modifier onlyPool(address _sender)
     {
-        require (deployedTokens.contains(_sender), "sender is not allowed");
+        require (deployedPools.contains(_sender), "sender should be pool");
         _;
     }
 
-    /** @notice Called by ibDeepFy, deposits tokens into the adapter.
+    /** @notice Called by Deposit Pools, deposits tokens into the adapter.
      * @dev Deposits funds, checks whether adapter is filled or insufficient, and then acts accordingly.
      ** @param _token Address of token (USDC, DAI, USDT...)
      ** @param _amount Amount of tokens in correct deimals (10**18 for DAI, 10**6 for USDT)
@@ -89,12 +88,12 @@ contract LiquidityHandler is
     function deposit(address _token, uint256 _amount)
         external
         whenNotPaused
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyPool(msg.sender)
     {
 
     }
 
-    /** @notice Called by ibDeepFy, withdraws deposited user assets.
+    /** @notice Called by Deposit Pools, withdraws deposited user assets.
      ** @param _user Address of depositor
      ** @param _token Address of token (USDC, DAI, USDT...)
      ** @param _amount Amount
@@ -103,33 +102,23 @@ contract LiquidityHandler is
         address _user,
         address _token,
         uint256 _amount
-    ) external whenNotPaused onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external whenNotPaused onlyPool(msg.sender) {
         IERC20Upgradeable(_token).safeTransfer(_user, _amount);
     }
 
-    /** @notice Called by ibDeepFy, withdraws claimable rewards .
-     ** @param _to Address to send rewards 
-     ** @param _amount Amount
-     */
-
-    function claimUserReward(address to, uint256 amount) external whenNotPaused onlyIbToken(msg.sender) {
-        require (IERC20Upgradeable(defiToken).balanceOf(address(this)) >= amount, "All rewards has been distributed, try again later !");
-        IERC20Upgradeable(defiToken).transfer(to, amount);
-    }
-
-    function getDeployedTokens() public view returns (address[] memory) {
-        return deployedTokens.values();
+    function getDeployedPools() public view returns (address[] memory) {
+        return deployedPools.values();
     }
     
     /* ========== ADMIN CONFIGURATION ========== */
 
-    function addToken(address _token) public onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
-        deployedTokens.add(_token);
+    function addPool(address _pool) public onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
+        deployedPools.add(_pool);
         return true;
     }
 
-    function deleteToken(address _token) public onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
-        deployedTokens.remove(_token);
+    function deletePool(address _pool) public onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
+        deployedPools.remove(_pool);
         return true;
     }
 
