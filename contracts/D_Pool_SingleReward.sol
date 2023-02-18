@@ -68,7 +68,6 @@ contract D_Pool_SingleReward is
     // event Deposited(address indexed user, address token, uint256 amount);
     // event NewHandlerSet(address oldHandler, address newHandler);
     // event UpdateTimeLimitSet(uint256 oldValue, uint256 newValue);
-    // event DepositTokenStatusChanged(address token, bool status);
     
     // event InterestChanged(
     //     uint256 oldYearInterest,

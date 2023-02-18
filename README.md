@@ -5,12 +5,12 @@
 # WIP
 
 
-# DefiLP Contract
+# D_Pool_SingleReward Contract
 [WIP]
-The DefiLP contract is a decentralized finance (DeFi) liquidity pool contract that allows users to deposit and earn returns on their deposited assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
+The D_Pool_SingleReward contract is a decentralized finance (DeFi) liquidity pool contract that allows users to deposit and earn returns on their deposited assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
 
 ## Features
-The DefiLP contract has the following features:
+The D_Pool_SingleReward contract has the following features:
 
 Support for ERC20 tokens: Users can deposit ERC20 tokens into the liquidity pool and earn returns on their deposited assets.
 
@@ -40,8 +40,6 @@ notifyRewardAmount: allow admins to increase amount of reward token, or set a ne
 setLiquidityHandler: This function allows admins to set the contract responsible for distributing money between the pool and the wallet.
 
 setTrustedForwarder: This function allows admins to set the trusted forwarder address, which is used to perform certain actions on behalf of the contract.
-
-depositTokenStatus: This function allows admins to enable or disable the ability for users to deposit a particular ERC20 token.
 
 
 # LiquidityHandler Contract
