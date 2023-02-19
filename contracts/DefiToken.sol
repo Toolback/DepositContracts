@@ -12,10 +12,10 @@ contract DefiToken is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
+    // /// @custom:oz-upgrades-unsafe-allow constructor
+    // constructor() {
+    //     _disableInitializers();
+    // }
 
     function initialize(address _admin) initializer public {
         __ERC20_init("DefiToken", "DT");
@@ -25,7 +25,7 @@ contract DefiToken is Initializable, ERC20Upgradeable, PausableUpgradeable, Acce
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(PAUSER_ROLE, _admin);
-        _mint(_admin, 1000000 * 10 ** decimals());
+        _mint(_admin, 10000000 * 10 ** decimals());
         _grantRole(MINTER_ROLE, _admin);
         _grantRole(UPGRADER_ROLE, _admin);
     }

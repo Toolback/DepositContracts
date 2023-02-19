@@ -86,10 +86,9 @@ contract D_Pool_SingleReward is
 
 
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
+    // /// @custom:oz-upgrades-unsafe-allow constructor
+    // constructor() initializer {}
+    // // _disableInitializers();
 
     /**
     * function to initialize the contract

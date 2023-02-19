@@ -3,7 +3,7 @@ import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ethers, upgrades } from "hardhat"
 import { BigNumber, Contract } from "ethers";
-import { parseEther, parseUnits } from "@ethersproject/units";
+import { formatUnits, parseEther, parseUnits } from "@ethersproject/units";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 const IERC20 = require("../ERC20Abi.json")
 var assert = require('chai').assert
@@ -109,7 +109,32 @@ describe("Deployment of Deposit.Finance Protocol", async () => {
     expect(ethers.utils.formatUnits((await defiToken.balanceOf(pool_usdc.address)).toString(), 18)).to.be.equal("1000000.0");
   })
 
-  describe("--> Check Pool Functionality", async () => {
+  describe("☄ Check Upgradeablility of Contracts ", async () => {
+    // it("Test 1 : Upgrade Defi Token Contract", async () => {
+    // });
+    // it("Test 2 : Upgrade Liquidity Handler Contract", async () => {
+    // });
+    it("Test : Upgrade Pool Contract", async () => {
+      let currentUsdcPool = await ethers.getContractAt("D_Pool_SingleReward", pool_usdc.address);
+      await currentUsdcPool.connect(owner).grantRole("0x189ab7a9244df0848122154315af71fe140f3db0fe014031783b0946b8c9d2e3", "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266")
+      await currentUsdcPool.connect(owner).changeUpgradeStatus(true);
+      await deposit(owner, usdcPolygon, ethers.utils.parseUnits("100", 6));
+      const balBefore = formatUnits((await pool_usdc.getStakeBalance(owner.address)).toString(), 6);
+      const NewUsdcPool = await ethers.getContractFactory("test_update_pool");
+      // let UsdcPool = await upgrades.forceImport(pool_usdc.address, NewUsdcPool);
+      const poolv2 = await upgrades.upgradeProxy(pool_usdc, NewUsdcPool);
+
+      console.log("------------------------------------");
+      console.log("bal w deposits before upgrade", balBefore);
+      console.log("Upgrade complete => ", await poolv2.version());
+      console.log("bal after upgrade", formatUnits((await poolv2.getStakeBalance(owner.address)).toString(), 6));
+      await poolv2.connect(owner).withdraw(50 * 10 ** 6);
+      console.log("bal after upgrade and sub 50", formatUnits((await poolv2.getStakeBalance(owner.address)).toString(), 6));
+      console.log("------------------------------------");
+    });
+  })
+
+  describe("☄ Check Pool Functionality", async () => {
     it("Test 1 : 1 user staking 100% tvl on 1000 reward / 10 days", async () => {
       await setReward(864000, parseEther("1000"));
 
@@ -229,14 +254,5 @@ describe("Deployment of Deposit.Finance Protocol", async () => {
   })
 
 });
-
-  // describe("--> Check Upgradeablility of Contracts ", async () => {
-  //   it("Test 1 : Upgrade Defi Token Contract", async () => {
-  //   });
-  //   it("Test 2 : Upgrade Liquidity Handler Contract", async () => {
-  //   });
-  //   it("Test 3 : Upgrade Pool Contract", async () => {
-  //   });
-  // })
 
 });

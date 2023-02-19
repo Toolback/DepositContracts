@@ -50,10 +50,10 @@ contract LiquidityHandler is
     // constructor() initializer {}
 
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
+    // /// @custom:oz-upgrades-unsafe-allow constructor
+    // constructor() {
+    //     _disableInitializers();
+    // }
 
 
     function initialize(
