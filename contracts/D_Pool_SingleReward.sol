@@ -255,36 +255,6 @@ contract D_Pool_SingleReward is
 
     /* ========== ADMIN CONFIGURATION ========== */
 
-    // /// @notice  Sets the new interest rate
-    // /// @dev When called, it sets the new interest rate after updating the index.
-    // /// @param _newAnnualInterest New annual interest rate with 2 decimals 850 == 8.50%
-    // /// @param _newInterestPerSecond New interest rate = interest per second (100000000244041000*10**10 == 8% APY)
-
-    // function setInterest(
-    //     uint256 _newAnnualInterest,
-    //     uint256 _newInterestPerSecond
-    // ) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    //     uint256 oldAnnualValue = annualInterest;
-    //     annualInterest = _newAnnualInterest;
-    //     // interestPerSecond = _newInterestPerSecond * 10**10;
-
-    //     // emit InterestChanged(
-    //     //     oldAnnualValue,
-    //     //     annualInterest
-    //     // );
-    // }
-
-    // function setUpdateTimeLimit(uint256 _newLimit)
-    //     public
-    //     onlyRole(DEFAULT_ADMIN_ROLE)
-    // {
-    //     uint256 oldValue = updateTimeLimit;
-    //     updateTimeLimit = _newLimit;
-
-    //     // emit UpdateTimeLimitSet(oldValue, _newLimit);
-    // }
-
-
     function setLiquidityHandler(address newHandler)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
