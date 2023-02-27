@@ -156,12 +156,13 @@ contract D_Pool_SingleReward is
     function deposit(uint256 _amount) external whenNotPaused updateReward(msg.sender) {
         require(_amount > 0, "IBToken : Invalid amount");
         // uint256 priceInWei = _amount * (10 ** decimals());
-        stakingToken.safeTransferFrom(msg.sender,address(liquidityHandler),_amount);
+        stakingToken.safeTransferFrom(msg.sender, address(liquidityHandler), _amount);
+        ILiquidityHandler handler = ILiquidityHandler(liquidityHandler);
+        handler.deposit(address(stakingToken), _amount); // protocol / token to claim
         
         balanceOf[msg.sender] += _amount;
         totalSupply += _amount;
         // claim potential reward for protocol if theres any
-        // ILiquidityHandler(liquidityHandler).deposit(1, stakeTokenAddress); // protocol / token to claim
      
       
         // emit TransferAssetValue(address(0), _msgSender(), _amount, amountIn18);
@@ -175,9 +176,11 @@ contract D_Pool_SingleReward is
     function withdraw(uint256 _amount) public updateReward(msg.sender) {
         // uint256 adjustedAmount = _amount * 10**(18 - decimals());
         require(balanceOf[msg.sender] >= _amount, "amount too hight / balance too low");
+        // uint256 fees = (_amount * 100) / 10000;
+        // uint256 finalAmout = _amount - fees;
         ILiquidityHandler handler = ILiquidityHandler(liquidityHandler);
         handler.withdraw(
-            msg.sender,
+            super._msgSender(),
             address(stakingToken),
             _amount
         );

@@ -15,6 +15,7 @@ let owner: SignerWithAddress, otherAccounts: SignerWithAddress[];
 
 let handler: Contract;
 let pool_usdc: Contract;
+let mlp_adapter: Contract;
 let defiToken: Contract;
 let usdcPolygon: any;
 
@@ -101,10 +102,18 @@ describe("Deployment of Deposit.Finance Protocol", async () => {
       { initializer: 'initialize', kind: 'uups' }
     );
 
-
-    handler.connect(owner).addPool(pool_usdc.address);
-    handler.connect(owner).grantRole(handler.DEFAULT_ADMIN_ROLE(), pool_usdc.address);
-    expect((await handler.getDeployedPools())[0]).to.be.equal(pool_usdc.address)
+    // Mlp Adapter
+    const MlpAdapter = await ethers.getContractFactory("MlpAdapter");
+    mlp_adapter = await upgrades.deployProxy(MlpAdapter,
+      [handler.address, usdcPolygon.address, defiToken.address, owner.address],
+      { initializer: 'initialize', kind: 'uups' }
+    );
+    // const adapterId = await handler.getLastAdapterIndex();
+    const adapterId = 1;
+    await handler.connect(owner).setPoolToAdapterId(pool_usdc.address, adapterId);
+    await handler.connect(owner).setAdapter(adapterId, "Mlp Strategy", 0, mlp_adapter.address, true);
+    // await handler.connect(owner).grantRole(handler.DEFAULT_ADMIN_ROLE(), pool_usdc.address);
+    expect((await handler.getListOfPools())[0]).to.be.equal(pool_usdc.address)
     await defiToken.connect(owner).transfer(pool_usdc.address, parseEther("1000000"))
     expect(ethers.utils.formatUnits((await defiToken.balanceOf(pool_usdc.address)).toString(), 18)).to.be.equal("1000000.0");
   })
@@ -129,12 +138,18 @@ describe("Deployment of Deposit.Finance Protocol", async () => {
       console.log("Upgrade complete => ", await poolv2.version());
       console.log("bal after upgrade", formatUnits((await poolv2.getStakeBalance(owner.address)).toString(), 6));
       await poolv2.connect(owner).withdraw(50 * 10 ** 6);
-      console.log("bal after upgrade and sub 50", formatUnits((await poolv2.getStakeBalance(owner.address)).toString(), 6));
+      console.log("bal after upgrade and sub 50 =>", formatUnits((await poolv2.getStakeBalance(owner.address)).toString(), 6));
       console.log("------------------------------------");
     });
   })
 
   describe("☄ Check Pool Functionality", async () => {
+    // it("Test Security Contract Pausable", async () => {
+    //   await deposit(owner, usdcPolygon, ethers.utils.parseUnits("100", 6));
+    //   await pool_usdc.connect(owner).pause();
+    //   console.log("REEEES HERE ?", await pool_usdc.connect(owner).paused())
+    //   await deposit(owner, usdcPolygon, ethers.utils.parseUnits("100", 6));
+    // })
     it("Test 1 : 1 user staking 100% tvl on 1000 reward / 10 days", async () => {
       await setReward(864000, parseEther("1000"));
 
