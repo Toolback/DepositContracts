@@ -54,10 +54,15 @@ contract LiquidityHandler is
     //     _disableInitializers();
     // }
 
+    modifier onlyPool(address _sender)
+    {
+        require (PoolToAdapterId.contains(_sender), "sender should be pool");
+        _;
+    }
 
     function initialize(
         address _multiSigWallet,
-        address _defiToken
+        address _deepfiToken
         // address _exchangeAddress
     ) initializer public {
         __Pausable_init();
@@ -70,13 +75,7 @@ contract LiquidityHandler is
         _grantRole(DEFAULT_ADMIN_ROLE, _multiSigWallet);
         _grantRole(UPGRADER_ROLE, _multiSigWallet);
 
-        defiToken = _defiToken;
-    }
-
-    modifier onlyPool(address _sender)
-    {
-        require (PoolToAdapterId.contains(_sender), "sender should be pool");
-        _;
+        defiToken = _deepfiToken;
     }
 
     /** @notice Called by Deposit Pools, deposits tokens into the adapter.

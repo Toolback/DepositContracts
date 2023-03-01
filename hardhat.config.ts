@@ -32,6 +32,21 @@ const config: HardhatUserConfig = {
        // blockNumber: 14785940
       }
     },
+    // fantom: {
+    //   url: process.env.FANTOM_URL,
+    //   gasPrice: "auto",
+    //   accounts: {
+    //     mnemonic: process.env.MNEMONIC,
+    //   },
+    // },
+    fantom_testnet: {
+      url: process.env.FANTOM_TESTNET_URL,
+      gasPrice: "auto",
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
+      },
+    },
+
     // mainnet: {
     //   url: process.env.MAINNET_URL,
     //   gasPrice: 8000000000,

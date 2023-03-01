@@ -82,7 +82,7 @@ describe("Deployment of Deposit.Finance Protocol", async () => {
 
   beforeEach(async () => {
     // Defi Token
-    const DefiToken = await ethers.getContractFactory("DefiToken");
+    const DefiToken = await ethers.getContractFactory("DeepfiToken");
     defiToken = await upgrades.deployProxy(DefiToken,
       [owner.address],
       { initializer: 'initialize', kind: 'uups' }

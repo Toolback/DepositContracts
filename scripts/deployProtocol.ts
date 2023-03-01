@@ -1,43 +1,18 @@
-// import { ethers } from "hardhat";
-
-// async function main() {
-//   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-//   const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-//   const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
-
-//   const lockedAmount = ethers.utils.parseEther("1");
-
-//   const Lock = await ethers.getContractFactory("Lock");
-//   const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-//   await lock.deployed();
-
-//   console.log(`Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`);
-// }
-
-// // We recommend this pattern to be able to use async/await everywhere
-// // and properly handle errors.
-// main().catch((error) => {
-//   console.error(error);
-//   process.exitCode = 1;
-// });
-
-
-
 import { ethers, upgrades } from "hardhat"
 
 async function deployProtocol() {
   // const gnosis = "0x2580f9954529853Ca5aC5543cE39E9B5B1145135";
   const gnosis = "0x25b3d91e2cbAe2397749f2F9A5598366Df26fA49";
+  const mlpAddress = "";
 
-  // Defi Token
-  const DefiToken = await ethers.getContractFactory("DefiToken");
+  // Deepfi Token
+  const DeepfiToken = await ethers.getContractFactory("DeepfiToken");
 
-  let erc20 = await upgrades.deployProxy(DefiToken,
-        [],
+  let erc20 = await upgrades.deployProxy(DeepfiToken,
+        [gnosis],
         {initializer: 'initialize', kind:'uups'}
   );
-  console.log("DefiToken upgradable deployed to:", erc20.address);
+  console.log("DeepfiToken deployed to:", erc20.address);
 
   
   // Liquidity Handler
@@ -48,17 +23,27 @@ async function deployProtocol() {
         {initializer: 'initialize', kind:'uups'}
   );
 
-  console.log("Handler upgradable deployed to:", handler.address);
+  console.log("Handler deployed to:", handler.address);
 
-    // TokenHub
-    const TokenHub = await ethers.getContractFactory("TokenHub");
+    // MLP Vault
+    const MLPVault = await ethers.getContractFactory("D_Pool_SingleReward");
 
-    let hub = await upgrades.deployProxy(TokenHub,
-          [gnosis, handler.address],
+    let mlpVault = await upgrades.deployProxy(MLPVault,
+          [mlpAddress, erc20.address, gnosis, handler.address, gnosis],
           {initializer: 'initialize', kind:'uups'}
     );
   
-    console.log("TokenHub upgradable deployed to:", hub.address);
+    console.log("MLP Vault deployed to:", mlpVault.address);
+
+    // MLP Adapter
+    const MLPAdapter = await ethers.getContractFactory("MlpAdapter");
+
+    let mlpAdapter = await upgrades.deployProxy(MLPAdapter,
+          [handler.address, mlpAddress, erc20.address, gnosis],
+          {initializer: 'initialize', kind:'uups'}
+    );
+  
+    console.log("MLP Adapter deployed to:", mlpAdapter.address);
 }
 
 deployProtocol()
