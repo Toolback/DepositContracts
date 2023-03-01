@@ -2,15 +2,10 @@
 pragma solidity ^0.8.9;
 
 
-import "./interfaces/DefiERC20.sol";
 import "./interfaces/ILiquidityHandler.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-
-
-// import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20PermitUpgradeable.sol";
@@ -20,7 +15,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 contract D_Pool_SingleReward is 
         Initializable,
         PausableUpgradeable,
-        // DefiERC20,
         AccessControlUpgradeable,
         UUPSUpgradeable
 {

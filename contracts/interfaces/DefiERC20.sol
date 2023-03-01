@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "hardhat/console.sol";
+
 /**
  * @dev Implementation of the {IERC20} interface.
  *
@@ -17,7 +18,7 @@ import "hardhat/console.sol";
  * For a generic mechanism see {ERC20PresetMinterPauser}.
  *
  * TIP: For a detailed writeup see our guide
- * https://forum.zeppelin.solutions/t/how-to-implement-erc20-supply-mechanisms/226[How
+ * https://forum.openzeppelin.com/t/how-to-implement-erc20-supply-mechanisms/226[How
  * to implement supply mechanisms].
  *
  * We have followed general OpenZeppelin Contracts guidelines: functions revert
@@ -34,13 +35,13 @@ import "hardhat/console.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC20MetadataUpgradeable, PausableUpgradeable {
+contract ERC20Upgradeable is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC20MetadataUpgradeable {
     mapping(address => uint256) private _balances;
 
     mapping(address => mapping(address => uint256)) private _allowances;
 
     uint256 private _totalSupply;
-    uint8 private _decimals;
+
     string private _name;
     string private _symbol;
 
@@ -53,14 +54,14 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    function __ERC20_init(string memory name_, string memory symbol_, uint8 decimals_) internal onlyInitializing {
-        __ERC20_init_unchained(name_, symbol_, decimals_);
+    function __ERC20_init(string memory name_, string memory symbol_, uint256 totalSupply_) internal onlyInitializing {
+        __ERC20_init_unchained(name_, symbol_, totalSupply_);
     }
 
-    function __ERC20_init_unchained(string memory name_, string memory symbol_, uint8 decimals_) internal onlyInitializing {
+    function __ERC20_init_unchained(string memory name_, string memory symbol_, uint256 totalSupply_) internal onlyInitializing {
         _name = name_;
         _symbol = symbol_;
-        _decimals = decimals_;
+        _totalSupply = totalSupply_;
     }
 
     /**
@@ -92,7 +93,7 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
      * {IERC20-balanceOf} and {IERC20-transfer}.
      */
     function decimals() public view virtual override returns (uint8) {
-        return _decimals;
+        return 18;
     }
 
     /**
@@ -117,7 +118,7 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
      * - `to` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address to, uint256 amount) public virtual override whenNotPaused returns (bool) {
+    function transfer(address to, uint256 amount) public virtual override returns (bool) {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
@@ -140,7 +141,7 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual override whenNotPaused returns (bool) {
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, amount);
         return true;
@@ -166,7 +167,7 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
         address from,
         address to,
         uint256 amount
-    ) public virtual override whenNotPaused returns (bool) {
+    ) public virtual override returns (bool) {
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);
         _transfer(from, to, amount);
@@ -185,9 +186,9 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual whenNotPaused returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
         address owner = _msgSender();
-        _approve(owner, spender, _allowances[owner][spender] + addedValue);
+        _approve(owner, spender, allowance(owner, spender) + addedValue);
         return true;
     }
 
@@ -205,9 +206,9 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual whenNotPaused returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
         address owner = _msgSender();
-        uint256 currentAllowance = _allowances[owner][spender];
+        uint256 currentAllowance = allowance(owner, spender);
         require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
         unchecked {
             _approve(owner, spender, currentAllowance - subtractedValue);
@@ -217,7 +218,7 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
     }
 
     /**
-     * @dev Moves `amount` of tokens from `sender` to `recipient`.
+     * @dev Moves `amount` of tokens from `from` to `to`.
      *
      * This internal function is equivalent to {transfer}, and can be used to
      * e.g. implement automatic token fees, slashing mechanisms, etc.
@@ -239,13 +240,15 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
         require(to != address(0), "ERC20: transfer to the zero address");
 
         _beforeTokenTransfer(from, to, amount);
-        uint256 fromBalance = _balances[from];
 
+        uint256 fromBalance = _balances[from];
         require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
         unchecked {
             _balances[from] = fromBalance - amount;
+            // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
+            // decrementing then incrementing.
+            _balances[to] += amount;
         }
-        _balances[to] += amount;
 
         emit Transfer(from, to, amount);
 
@@ -267,7 +270,10 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
         _beforeTokenTransfer(address(0), account, amount);
 
         _totalSupply += amount;
-        _balances[account] += amount;
+        unchecked {
+            // Overflow not possible: balance + amount is at most totalSupply + amount, which is checked above.
+            _balances[account] += amount;
+        }
         emit Transfer(address(0), account, amount);
 
         _afterTokenTransfer(address(0), account, amount);
@@ -293,8 +299,9 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
         require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
         unchecked {
             _balances[account] = accountBalance - amount;
+            // Overflow not possible: amount <= accountBalance <= totalSupply.
+            _totalSupply -= amount;
         }
-        _totalSupply -= amount;
 
         emit Transfer(account, address(0), amount);
 
@@ -327,7 +334,7 @@ contract DefiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, IERC
     }
 
     /**
-     * @dev Spend `amount` form the allowance of `owner` toward `spender`.
+     * @dev Updates `owner` s allowance for `spender` based on spent `amount`.
      *
      * Does not update the allowance amount in case of infinite allowance.
      * Revert if not enough allowance is available.

@@ -5,7 +5,6 @@ interface ILiquidityHandler
 {
     function deposit(address _token, uint256 _amount) external;
     function withdraw(address _user, address _token, uint256 _amount) external;
-    function claimUserReward(address to, uint256 amount) external;
     function grantRole(bytes32 role, address account) external;
 
 }
