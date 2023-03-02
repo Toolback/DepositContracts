@@ -1,7 +1,6 @@
 import { ethers, upgrades } from "hardhat"
 
 async function deployProtocol() {
-  // const gnosis = "0x2580f9954529853Ca5aC5543cE39E9B5B1145135";
   const gnosis = "0x25b3d91e2cbAe2397749f2F9A5598366Df26fA49";
   const mlpAddress = "";
 
@@ -12,7 +11,7 @@ async function deployProtocol() {
         [gnosis],
         {initializer: 'initialize', kind:'uups'}
   );
-  console.log("DeepfiToken deployed to:", erc20.address);
+  console.log("Deepfi Token deployed to:", erc20.address);
 
   
   // Liquidity Handler

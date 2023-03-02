@@ -29,57 +29,48 @@ const config: HardhatUserConfig = {
       forking: {
         enabled: process.env.FORKING_ENABLED == "true",
         url: process.env.FORKING_URL as string,
-       // blockNumber: 14785940
+        // blockNumber: 14785940
       }
     },
     // fantom: {
     //   url: process.env.FANTOM_URL,
-    //   gasPrice: "auto",
-    //   accounts: {
-    //     mnemonic: process.env.MNEMONIC,
-    //   },
-    // },
-    fantom_testnet: {
-      url: process.env.FANTOM_TESTNET_URL,
-      gasPrice: "auto",
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-      },
-    },
-
-    // mainnet: {
-    //   url: process.env.MAINNET_URL,
-    //   gasPrice: 8000000000,
     //   accounts: {
     //     mnemonic: process.env.MNEMONIC,
     //   },
     // },
     // polygon: {
-    //   url: process.env.POLYGON_URL,
-    //   gasPrice: "auto",
-    //   accounts: {
-    //     mnemonic: process.env.MNEMONIC,
+      //   url: process.env.POLYGON_URL,
+      //   gasPrice: "auto",
+      //   accounts: {
+        //     mnemonic: process.env.MNEMONIC,
     //   },
     // },
-    // // TESTNETS
-    // mumbai: {
-    //   url: process.env.MUMBAI_URL,
-    //   gasPrice: "auto",
-    //   accounts: {
-    //     mnemonic: process.env.MNEMONIC,
-    //   },
-    // },
+    // TESTNETS
+    fantom_testnet: {
+      url: process.env.FANTOM_TESTNET_URL,
+      accounts: [process.env.PRIVATE_KEY as string],
+      // accounts: {
+      //   mnemonic: process.env.MNEMONIC,
+      // },
+    },
+    mumbai: {
+      url: process.env.MUMBAI_URL,
+      accounts: [process.env.PRIVATE_KEY as string],
+      // accounts: {
+      //   mnemonic: process.env.MNEMONIC,
+      // },
+    },
   },
 
   gasReporter: {
     enabled: process.env.REPORT_GAS == "true",
     currency: "USD",
   },
-  etherscan: {
-    // apiKey: process.env.ETHERSCAN_API_KEY,
-    apiKey: process.env.POLYGONSCAN_API_KEY,
+  // etherscan: {
+  //   // apiKey: process.env.ETHERSCAN_API_KEY,
+  //   apiKey: process.env.POLYGONSCAN_API_KEY,
 
-  },
+  // },
 
   mocha: {
     timeout: 3600000,

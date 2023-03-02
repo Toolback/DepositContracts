@@ -2,8 +2,19 @@
 
 // In contract Address from openzepellin l.185 delegatecall commented
 
-# WIP
+# Contracts Address
+## Fantom Testnet
+Test Token deployed to: 0x878ae3A4D7d7f308563142870AdDc24f91B6AfbE
+Deepfi Token deployed to: 0xB7745a79689CD81055DF3Cdf93842a18E3726078
+Handler deployed to: 0xCE40cED2e227dC33D2F9BddF6582568313786E8e
+MLP Vault deployed to: 0x6ac64CbF9703e50D851aC8E8BE608F18b9f8f5DF
+MLP Adapter deployed to: 0xf6A1B71ebb36d773ffeAaD74145862c0978A1B31
 
+## Fantom Mainnet
+
+# WIP
+[~] -> Set claim first adapter
+[~] -> run tests
 
 # D_Pool_SingleReward Contract
 [WIP]
