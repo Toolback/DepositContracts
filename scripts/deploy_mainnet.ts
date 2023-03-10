@@ -25,7 +25,7 @@ async function deployProtocol() {
   console.log("Handler deployed to:", handler.address);
 
     // MLP Vault
-    const MLPVault = await ethers.getContractFactory("D_Pool_SingleReward");
+    const MLPVault = await ethers.getContractFactory("D_Vault_SingleReward");
 
     let mlpVault = await upgrades.deployProxy(MLPVault,
           [mlpAddress, erc20.address, gnosis, handler.address, gnosis],

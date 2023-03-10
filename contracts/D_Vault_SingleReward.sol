@@ -12,7 +12,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20Pe
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract D_Pool_SingleReward is 
+contract D_Vault_SingleReward is 
         Initializable,
         PausableUpgradeable,
         AccessControlUpgradeable,
@@ -31,12 +31,12 @@ contract D_Pool_SingleReward is
     // flag for upgrades availability
     bool public upgradeStatus;
 
-    // trusted forwarder address, see EIP-2771
-    address public trustedForwarder;
-
     IERC20Upgradeable public stakingToken;
     IERC20Upgradeable public rewardsToken;
 
+    string public vaultName;
+    // Total staked
+    uint public totalSupply;
     // Time for rewards to be paid in seconds
     uint public duration;
     // Timestamp of reward ending
@@ -47,15 +47,14 @@ contract D_Pool_SingleReward is
     uint public rewardRate;
     // Sum of (reward rate * dt * 1e18 / total supply)
     uint public rewardPerTokenStored;
-    // User address => token index => rewardPerTokenStored
-    mapping(address => uint) public userRewardPerTokenPaid;
-    // User address => token index => rewards to be claimed
-    mapping(address => uint) public rewards;
-
-    // Total staked
-    uint public totalSupply;
+    // User address => rewardPerTokenStored
+    mapping(address => uint256) public userRewardPerTokenPaid;
+    // User address =>  rewards to be claimed
+    mapping(address => uint256) public rewards;
+    // user address => total user earned bal
+    mapping(address => uint256) public earned;
     // User address => staked amount
-    mapping(address => uint) public balanceOf;
+    mapping(address => uint256) public balanceOf;
 
 
     // event BurnedForWithdraw(address indexed user, uint256 amount);
@@ -90,16 +89,14 @@ contract D_Pool_SingleReward is
     * @param _rewardsToken the address of the staking reward token 
     * @param _multiSigWallet the address of the multisig wallet associated with the contract
     * @param _handler the address of the liquidity handler contract
-    * @param _trustedForwarder the address of the trusted forwarder
     */
     function initialize(
+        string memory _vaultName,
         address _stakingToken,
         address _rewardsToken,
         address _multiSigWallet,
-        address _handler,
-        address _trustedForwarder
+        address _handler
     ) initializer public {
-        // uint8 resDecimals = DefiERC20(_underlying_address).decimals();
         __Pausable_init();
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -107,12 +104,13 @@ contract D_Pool_SingleReward is
         _grantRole(DEFAULT_ADMIN_ROLE, _multiSigWallet);
         _grantRole(UPGRADER_ROLE, _multiSigWallet);
         _grantRole(PAUSER_ROLE, _multiSigWallet);
+
+        vaultName = _vaultName;
  
         stakingToken = IERC20Upgradeable(_stakingToken);
         rewardsToken = IERC20Upgradeable(_rewardsToken);
 
         liquidityHandler = _handler;
-        trustedForwarder = _trustedForwarder;
     }
 
     /// @notice  Updates the user's claimable reward balance every time a user make an action
@@ -125,7 +123,6 @@ contract D_Pool_SingleReward is
             rewards[_account] = getRewardBalance(_account);
             userRewardPerTokenPaid[_account] = rewardPerTokenStored;
         }
-
         _;
     }
 
@@ -148,16 +145,13 @@ contract D_Pool_SingleReward is
     /// @param _amount Amount to deposit
 
     function deposit(uint256 _amount) external whenNotPaused updateReward(msg.sender) {
-        require(_amount > 0, "IBToken : Invalid amount");
-        // uint256 priceInWei = _amount * (10 ** decimals());
+        require(_amount > 0, "Vault : Invalid amount");
         stakingToken.safeTransferFrom(msg.sender, address(liquidityHandler), _amount);
         ILiquidityHandler handler = ILiquidityHandler(liquidityHandler);
         handler.deposit(address(stakingToken), _amount); // protocol / token to claim
         
         balanceOf[msg.sender] += _amount;
-        totalSupply += _amount;
-        // claim potential reward for protocol if theres any
-     
+        totalSupply += _amount;     
       
         // emit TransferAssetValue(address(0), _msgSender(), _amount, amountIn18);
         // emit Deposited(_msgSender(), stakeTokenAddress, _amount);
@@ -168,7 +162,6 @@ contract D_Pool_SingleReward is
     /// @param _amount Amount to withdraw
 
     function withdraw(uint256 _amount) public updateReward(msg.sender) {
-        // uint256 adjustedAmount = _amount * 10**(18 - decimals());
         require(balanceOf[msg.sender] >= _amount, "amount too hight / balance too low");
         // uint256 fees = (_amount * 100) / 10000;
         // uint256 finalAmout = _amount - fees;
@@ -194,11 +187,16 @@ contract D_Pool_SingleReward is
         if (reward > 0) {
             rewards[msg.sender] = 0;
             rewardsToken.transfer(msg.sender, reward);
+            earned[msg.sender] += reward;
         }
     }
 
     function getStakeBalance(address _account) public view returns (uint) {
         return balanceOf[_account];
+    }
+
+    function getTotalUserEarned(address _account) public view returns (uint) {
+        return earned[_account];
     }
     
     function getRewardBalance(address _account) public view returns (uint) {
@@ -207,6 +205,19 @@ contract D_Pool_SingleReward is
         ) + rewards[_account];
     }
 
+    function _min(uint x, uint y) private pure returns (uint) {
+        return x <= y ? x : y;
+    }
+
+    function getStakeToken() public view returns (address) {
+        return address(stakingToken);
+    }
+
+    function getRewardToken() public view returns (address) {
+        return address(rewardsToken);
+    }
+
+    /* ========== ADMIN CONFIGURATION ========== */
     function setRewardsDuration(uint _duration) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(finishAt < block.timestamp, "reward duration not finished");
         duration = _duration;
@@ -230,41 +241,15 @@ contract D_Pool_SingleReward is
         updatedAt = block.timestamp;
     }
 
-    function _min(uint x, uint y) private pure returns (uint) {
-        return x <= y ? x : y;
-    }
-
-    function getStakeToken() public view returns (address) {
-        return address(stakingToken);
-    }
-
-    function isTrustedForwarder(address forwarder)
-        public
-        view
-        virtual
-        returns (bool)
-    {
-        return forwarder == trustedForwarder;
-    }
-
-    /* ========== ADMIN CONFIGURATION ========== */
-
     function setLiquidityHandler(address newHandler)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        require(newHandler.isContract(), "IBToken: Not contract");
+        require(newHandler.isContract(), "Vault: Not contract");
 
         address oldValue = liquidityHandler;
         liquidityHandler = newHandler;
         // emit NewHandlerSet(oldValue, liquidityHandler);
-    }
-
-    function setTrustedForwarder(address newTrustedForwarder)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
-        trustedForwarder = newTrustedForwarder;
     }
 
     function changeUpgradeStatus(bool _status)
@@ -282,32 +267,12 @@ contract D_Pool_SingleReward is
         _unpause();
     }
 
-    function grantRole(bytes32 role, address account)
-        public
-        override
-        onlyRole(getRoleAdmin(role))
-    {
-        if (role == DEFAULT_ADMIN_ROLE) {
-            require(account.isContract(), "IBToken: Not contract");
-        }
-        _grantRole(role, account);
-    }
-
-    // function _msgSender()
-    //     internal
-    //     view
-    //     virtual
+    // function grantRole(bytes32 role, address account)
+    //     public
     //     override
-    //     returns (address sender)
+    //     onlyRole(getRoleAdmin(role))
     // {
-    //     if (isTrustedForwarder(msg.sender)) {
-    //         // The assembly code is more direct than the Solidity version using `abi.decode`.
-    //         assembly {
-    //             sender := shr(96, calldataload(sub(calldatasize(), 20)))
-    //         }
-    //     } else {
-    //         return super._msgSender();
-    //     }
+    //     _grantRole(role, account);
     // }
     
     function _authorizeUpgrade(address)
@@ -315,7 +280,7 @@ contract D_Pool_SingleReward is
         override
         onlyRole(UPGRADER_ROLE)
     {
-        require(upgradeStatus, "IBToken: Upgrade not allowed");
+        require(upgradeStatus, "Vault: Upgrade not allowed");
         upgradeStatus = false;
     }
 }

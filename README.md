@@ -4,24 +4,27 @@
 
 # Contracts Address
 ## Fantom Testnet
-Test Token deployed to: 0x878ae3A4D7d7f308563142870AdDc24f91B6AfbE
-Deepfi Token deployed to: 0xB7745a79689CD81055DF3Cdf93842a18E3726078
-Handler deployed to: 0xCE40cED2e227dC33D2F9BddF6582568313786E8e
-MLP Vault deployed to: 0x6ac64CbF9703e50D851aC8E8BE608F18b9f8f5DF
-MLP Adapter deployed to: 0xf6A1B71ebb36d773ffeAaD74145862c0978A1B31
+➜  DepositContracts git:(main) ✗ npx hardhat run scripts/deploy_testnet.ts --network fantom_testnet
+Test Token deployed to: 0x87a64cDe9ee4141c086eE151553A5b1E2056F2a7
+Deepfi Token deployed to: 0x7b76dc056AD4Cc014a392Dcc4aac424E7506d251
+Handler deployed to: 0x47c03f1a44Ab370994419cA38Ac05E70DEC10578
+MLP Vault deployed to: 0xc3fa3096A0853Ab1199eA504ad2C167a0eB92680
+MLP Adapter deployed to: 0xC3CCE338bC613F4c7aB05fd7730da020DA54D9BD
 
 ## Fantom Mainnet
 
 # WIP
+[] -> fix mintInterval of deepfi token (actual testing 365 days)
 [~] -> Set claim first adapter
 [~] -> run tests
+[~] -> set withdraw fees on pools
 
-# D_Pool_SingleReward Contract
+# D_Vault_SingleReward Contract
 [WIP]
-The D_Pool_SingleReward contract is a decentralized finance (DeFi) liquidity pool contract that allows users to deposit and earn returns on their deposited assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
+The D_Vault_SingleReward contract is a decentralized finance (DeFi) liquidity pool contract that allows users to deposit and earn returns on their deposited assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
 
 ## Features
-The D_Pool_SingleReward contract has the following features:
+The D_Vault_SingleReward contract has the following features:
 
 Support for ERC20 tokens: Users can deposit ERC20 tokens into the liquidity pool and earn returns on their deposited assets.
 
@@ -32,7 +35,7 @@ Role-based access control: The contract has roles such as PAUSER_ROLE, MINTER_RO
 Upgradeable: The contract can be upgraded by creating a new contract implementation and replacing the current one.
 
 ## Functions
-The D_Pool_SingleReward contract has the following functions:
+The D_Vault_SingleReward contract has the following functions:
 
 initialize: This function is called when the contract is deployed and is used to set up the contract, including setting the annual interest rate, update time limit, and liquidity handler address.
 

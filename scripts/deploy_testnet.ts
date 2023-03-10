@@ -36,11 +36,11 @@ async function deploy_testnet() {
   console.log("Handler deployed to:", handler.address);
 
     // MLP Vault
-    const MLPVault = await ethers.getContractFactory("D_Pool_SingleReward");
+    const MLPVault = await ethers.getContractFactory("D_Vault_SingleReward");
 
     let mlpVault = await upgrades.deployProxy(MLPVault,
       //staking token, reward token, admin, handler, trusted forwarder
-          [testtoken.address, erc20.address, gnosis, handler.address, gnosis],
+          ["MLP",testtoken.address, erc20.address, gnosis, handler.address],
           {initializer: 'initialize', kind:'uups'}
     );
   
@@ -56,6 +56,14 @@ async function deploy_testnet() {
     );
   
     console.log("MLP Adapter deployed to:", mlpAdapter.address);
+
+      // const adapterId = await handler.getLastAdapterIndex();
+      const adapterId = 1;
+      await handler.setPoolToAdapterId(mlpVault.address, adapterId);
+      await handler.setAdapter(adapterId, "Mlp Strategy", 0, mlpAdapter.address, true);
+      // await handler.grantRole(handler.DEFAULT_ADMIN_ROLE(), pool_usdc.address);
+      await erc20.transfer(mlpVault.address, ethers.utils.parseEther("1000000"))
+    
 }
 
 deploy_testnet()
@@ -66,5 +74,5 @@ deploy_testnet()
   });
 
 export default deploy_testnet;
-//npx hardhat run scripts/deploy/deployHandler.ts --network polygon
+//npx hardhat run scripts/deploy/deploy_testnet.ts --network fantom_testnet
 //npx hardhat verify 0xb647c6fe9d2a6e7013c7e0924b71fa7926b2a0a3 --network polygon

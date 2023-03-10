@@ -36,11 +36,18 @@ contract LiquidityHandler is
     // Protocol Governance Token used for rewarding user staking
     address public defiToken;
 
+    struct ContractsInfo{
+        string name;
+        string description;
+        string link;
+    }
+
     // info about adapter
     struct AdapterInfo {
         string name; // MLP 
         uint256 percentage; //100 == 1.00%
         address adapterAddress; // 0x..
+        ContractsInfo[] contracts;
         bool status; // active
     }
 
@@ -154,6 +161,14 @@ contract LiquidityHandler is
         return counter;
     }
 
+    function getAdapterInfo(uint256 _adapterId)
+        external
+        view
+        returns (AdapterInfo memory data_)
+    {
+        data_ = adapterIdsToAdapterInfo[_adapterId];
+    }
+
     function getActiveAdapters()
         external
         view
@@ -186,9 +201,6 @@ contract LiquidityHandler is
         }
         return (adapters, pools);
     }
-    // function getDeployedPools() public view returns (address[] memory) {
-    //     return deployedPools.values();
-    // }
     
     /* ========== ADMIN CONFIGURATION ========== */
 
@@ -215,22 +227,34 @@ contract LiquidityHandler is
         adapter.status = _status;
     }
 
+    function addContractInfoToAdapterInfo(
+        uint256 _adapterId, 
+        ContractsInfo memory _newContractInfo
+    ) public {
+        require(adapterIdsToAdapterInfo[_adapterId].status, "Adapter is not active");
+        adapterIdsToAdapterInfo[_adapterId].contracts.push(_newContractInfo);
+    }
+
+    function deleteContractInfoFromAdapterInfo(
+        uint256 adapterId, 
+        uint256 contractIndex
+    ) public {
+    require(adapterIdsToAdapterInfo[adapterId].contracts.length > contractIndex, "Invalid contract index");
+        // Move the last element into the deleted slot
+        uint256 lastIndex = adapterIdsToAdapterInfo[adapterId].contracts.length - 1;
+        adapterIdsToAdapterInfo[adapterId].contracts[contractIndex] = adapterIdsToAdapterInfo[adapterId].contracts[lastIndex];
+
+        // Delete the last element
+        adapterIdsToAdapterInfo[adapterId].contracts.pop();
+    }
+
+
     function changeAdapterStatus(
         uint256 _id,
         bool _status
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         adapterIdsToAdapterInfo[_id].status = _status;
     }
-
-    // function addPool(address _pool) public onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
-    //     deployedPools.add(_pool);
-    //     return true;
-    // }
-
-    // function deletePool(address _pool) public onlyRole(DEFAULT_ADMIN_ROLE) returns (bool) {
-    //     deployedPools.remove(_pool);
-    //     return true;
-    // }
 
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
@@ -240,16 +264,16 @@ contract LiquidityHandler is
         _unpause();
     }
 
-    function grantRole(bytes32 role, address account)
-        public
-        override
-        onlyRole(getRoleAdmin(role))
-    {
-        if (role == DEFAULT_ADMIN_ROLE) {
-            require(account.isContract(), "Handler: Not contract");
-        }
-        _grantRole(role, account);
-    }
+    // function grantRole(bytes32 role, address account)
+    //     public
+    //     override
+    //     onlyRole(getRoleAdmin(role))
+    // {
+    //     // if (role == DEFAULT_ADMIN_ROLE) {
+    //     //     require(account.isContract(), "Handler: Not contract");
+    //     // }
+    //     _grantRole(role, account);
+    // }
 
     /**
      * @dev admin function for removing funds from contract
