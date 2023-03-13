@@ -2,68 +2,68 @@ import { ethers, upgrades } from "hardhat"
 
 async function deploy_testnet() {
   const gnosis = "0x25b3d91e2cbAe2397749f2F9A5598366Df26fA49"; // privatekey
-//   const gnosis = "0xe76c64A113da0fF58D31C2b7A6F7168d842E5912"; //mnemo
+  //   const gnosis = "0xe76c64A113da0fF58D31C2b7A6F7168d842E5912"; //mnemo
 
-    // Test Token (only for testnet)
-    const testToken = await ethers.getContractFactory("FakeToken");
+  // Test Token (only for testnet)
+  const testToken = await ethers.getContractFactory("FakeToken");
 
-    let testtoken = await upgrades.deployProxy(testToken,
-          [gnosis],
-          {initializer: 'initialize', kind:'uups'}
-    );
+  let testtoken = await upgrades.deployProxy(testToken,
+    [gnosis],
+    { initializer: 'initialize', kind: 'uups' }
+  );
 
-    console.log("Test Token deployed to:", testtoken.address);
+  console.log("Test Token deployed to:", testtoken.address);
 
   // Deepfi Token
   const DeepfiToken = await ethers.getContractFactory("DeepfiToken");
 
   let erc20 = await upgrades.deployProxy(DeepfiToken,
-        [gnosis],
-        {initializer: 'initialize', kind:'uups'}
+    [gnosis],
+    { initializer: 'initialize', kind: 'uups' }
   );
   console.log("Deepfi Token deployed to:", erc20.address);
 
-  
+
   // Liquidity Handler
   const Handler = await ethers.getContractFactory("LiquidityHandler");
 
   let handler = await upgrades.deployProxy(Handler,
-      // admin, deepfi token
-        [gnosis, erc20.address],
-        {initializer: 'initialize', kind:'uups'}
+    // admin, deepfi token
+    [gnosis, erc20.address],
+    { initializer: 'initialize', kind: 'uups' }
   );
 
   console.log("Handler deployed to:", handler.address);
 
-    // MLP Vault
-    const MLPVault = await ethers.getContractFactory("D_Vault_SingleReward");
+  // MLP Vault
+  const MLPVault = await ethers.getContractFactory("D_Vault_SingleReward");
 
-    let mlpVault = await upgrades.deployProxy(MLPVault,
-      //staking token, reward token, admin, handler, trusted forwarder
-          ["MLP",testtoken.address, erc20.address, gnosis, handler.address],
-          {initializer: 'initialize', kind:'uups'}
-    );
-  
-    console.log("MLP Vault deployed to:", mlpVault.address);
+  let mlpVault = await upgrades.deployProxy(MLPVault,
+    //staking token, reward token, admin, handler, trusted forwarder
+    ["MLP", testtoken.address, erc20.address, gnosis, handler.address],
+    { initializer: 'initialize', kind: 'uups' }
+  );
 
-    // MLP Adapter
-    const MLPAdapter = await ethers.getContractFactory("MlpAdapter");
+  console.log("MLP Vault deployed to:", mlpVault.address);
 
-    let mlpAdapter = await upgrades.deployProxy(MLPAdapter,
-      // handler / staking token / reward token / admin
-          [handler.address, testtoken.address, erc20.address, gnosis],
-          {initializer: 'initialize', kind:'uups'}
-    );
-  
-    console.log("MLP Adapter deployed to:", mlpAdapter.address);
+  // MLP Adapter
+  const MLPAdapter = await ethers.getContractFactory("MlpAdapter");
 
-      // const adapterId = await handler.getLastAdapterIndex();
-      const adapterId = 1;
-      await handler.setPoolToAdapterId(mlpVault.address, adapterId);
-      await handler.setAdapter(adapterId, "Mlp Strategy", 0, mlpAdapter.address, true);
-      // await handler.grantRole(handler.DEFAULT_ADMIN_ROLE(), pool_usdc.address);
-      await erc20.transfer(mlpVault.address, ethers.utils.parseEther("1000000"))
-    
+  let mlpAdapter = await upgrades.deployProxy(MLPAdapter,
+    // handler / staking token / reward token / admin
+    [handler.address, testtoken.address, erc20.address, gnosis, "0x7b9e962dd8AeD0Db9A1D8a2D7A962ad8b871Ce4F"],
+    { initializer: 'initialize', kind: 'uups' }
+  );
+
+  console.log("MLP Adapter deployed to:", mlpAdapter.address);
+
+  // const adapterId = await handler.getLastAdapterIndex();
+  const adapterId = 1;
+  await handler.setPoolToAdapterId(mlpVault.address, adapterId);
+  await handler.setAdapter(adapterId, "Mlp Strategy", 0, mlpAdapter.address, true);
+  // await handler.grantRole(handler.DEFAULT_ADMIN_ROLE(), pool_usdc.address);
+  await erc20.transfer(mlpVault.address, ethers.utils.parseEther("1000000"))
+
 }
 
 deploy_testnet()

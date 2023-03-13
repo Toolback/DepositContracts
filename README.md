@@ -19,6 +19,8 @@ MLP Adapter deployed to: 0xC3CCE338bC613F4c7aB05fd7730da020DA54D9BD
 [~] -> run tests
 [~] -> set withdraw fees on pools
 
+<img src="./VaultSchema.png" alt="Vault Schema"/>
+
 # D_Vault_SingleReward Contract
 [WIP]
 The D_Vault_SingleReward contract is a decentralized finance (DeFi) liquidity pool contract that allows users to deposit and earn returns on their deposited assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.

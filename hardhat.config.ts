@@ -15,21 +15,30 @@ dotenv.config();
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.11",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 0,
+    compilers: [
+      {
+        version: "0.8.11",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 0,
+          },
+        },
       },
-    },
+      // {
+      //   version: "0.6.12",
+      // },
+    ],
+
   },
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
+      // blockGasLimit: 2578162, 
       forking: {
         enabled: process.env.FORKING_ENABLED == "true",
         url: process.env.FORKING_URL as string,
-        // blockNumber: 14785940
+        blockNumber: 57393222,
       }
     },
     // fantom: {

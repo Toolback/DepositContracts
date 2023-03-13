@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20PermitUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "./DeepfiToken.sol";
 
 contract D_Vault_SingleReward is 
         Initializable,
@@ -36,17 +37,17 @@ contract D_Vault_SingleReward is
 
     string public vaultName;
     // Total staked
-    uint public totalSupply;
+    uint256 public totalSupply;
     // Time for rewards to be paid in seconds
-    uint public duration;
+    uint256 public duration;
     // Timestamp of reward ending
-    uint public finishAt;
+    uint256 public finishAt;
     // Minimum of last updated time and reward finish time
-    uint public updatedAt;
+    uint256 public updatedAt;
     // Reward in seconds
-    uint public rewardRate;
+    uint256 public rewardRate;
     // Sum of (reward rate * dt * 1e18 / total supply)
-    uint public rewardPerTokenStored;
+    uint256 public rewardPerTokenStored;
     // User address => rewardPerTokenStored
     mapping(address => uint256) public userRewardPerTokenPaid;
     // User address =>  rewards to be claimed
@@ -123,6 +124,7 @@ contract D_Vault_SingleReward is
             rewards[_account] = getRewardBalance(_account);
             userRewardPerTokenPaid[_account] = rewardPerTokenStored;
         }
+        
         _;
     }
 
@@ -130,16 +132,40 @@ contract D_Vault_SingleReward is
         return _min(finishAt, block.timestamp);
     }
 
-    function rewardPerToken() public view returns (uint) {
-        if (totalSupply == 0) {
-            return rewardPerTokenStored;
-        }
+    // function rewardPerToken() public view returns (uint) {
+    //     if (totalSupply == 0) {
+    //         return rewardPerTokenStored;
+    //     }
 
-        return
-            rewardPerTokenStored +
-            (rewardRate * (lastTimeRewardApplicable() - updatedAt) * 1e18) /
-            totalSupply;
+    //     return
+    //         rewardPerTokenStored +
+    //         (rewardRate * (lastTimeRewardApplicable() - updatedAt) * 1e18) /
+    //         totalSupply;
+    // }
+
+    // function getRewardBalance(address _account) public view returns (uint) {
+    //     return balanceOf[_account] * (
+    //         (rewardPerToken() - userRewardPerTokenPaid[_account]) / 1e18
+    //     ) + rewards[_account];
+    // }
+    function rewardPerToken() public view returns (uint256) {
+    if (totalSupply == 0) {
+        return rewardPerTokenStored;
     }
+
+    uint256 rewardDuration = lastTimeRewardApplicable() - updatedAt;
+    uint256 rewardRatePerToken = rewardRate * rewardDuration * 1e18 / totalSupply;
+    return rewardPerTokenStored + rewardRatePerToken;
+}
+
+function getRewardBalance(address _account) public view returns (uint256) {
+    uint256 earnedReward = rewards[_account];
+    uint256 accountRewardPerTokenPaid = userRewardPerTokenPaid[_account];
+    uint256 rewardPerTokenDiff = rewardPerToken() - accountRewardPerTokenPaid;
+    uint256 reward = balanceOf[_account] * rewardPerTokenDiff / 1e18;
+    return earnedReward + reward;
+}
+
     /// @notice  Deposit user assets .
     /// @dev When called, reward is updated, then asset token is sent to the LiquidityHandler
     /// @param _amount Amount to deposit
@@ -197,12 +223,6 @@ contract D_Vault_SingleReward is
 
     function getTotalUserEarned(address _account) public view returns (uint) {
         return earned[_account];
-    }
-    
-    function getRewardBalance(address _account) public view returns (uint) {
-        return balanceOf[_account] * (
-            (rewardPerToken() - userRewardPerTokenPaid[_account]) / 1e18
-        ) + rewards[_account];
     }
 
     function _min(uint x, uint y) private pure returns (uint) {

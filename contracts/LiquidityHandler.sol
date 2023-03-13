@@ -33,9 +33,6 @@ contract LiquidityHandler is
     //flag for upgrades availability
     bool public upgradeStatus;
 
-    // Protocol Governance Token used for rewarding user staking
-    address public defiToken;
-
     struct ContractsInfo{
         string name;
         string description;
@@ -68,9 +65,7 @@ contract LiquidityHandler is
     }
 
     function initialize(
-        address _multiSigWallet,
-        address _deepfiToken
-        // address _exchangeAddress
+        address _multiSigWallet
     ) initializer public {
         __Pausable_init();
         __AccessControl_init();
@@ -78,11 +73,8 @@ contract LiquidityHandler is
 
         // require(_multiSigWallet.isContract(), "Handler: Not contract");
         // require(_exchangeAddress.isContract(), "Handler: Not contract");
-        // exchangeAddress = _exchangeAddress;
         _grantRole(DEFAULT_ADMIN_ROLE, _multiSigWallet);
         _grantRole(UPGRADER_ROLE, _multiSigWallet);
-
-        defiToken = _deepfiToken;
     }
 
     /** @notice Called by Deposit Pools, deposits tokens into the adapter.
