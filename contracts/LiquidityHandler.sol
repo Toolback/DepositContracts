@@ -219,7 +219,7 @@ contract LiquidityHandler is
     function addContractInfoToAdapterInfo(
         uint256 _adapterId, 
         ContractsInfo memory _newContractInfo
-    ) public {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(adapterIdsToAdapterInfo[_adapterId].status, "Handler : Adapter is not active");
         adapterIdsToAdapterInfo[_adapterId].contracts.push(_newContractInfo);
     }
@@ -227,7 +227,7 @@ contract LiquidityHandler is
     function deleteContractInfoFromAdapterInfo(
         uint256 adapterId, 
         uint256 contractIndex
-    ) public {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
     require(adapterIdsToAdapterInfo[adapterId].contracts.length > contractIndex, "Handler : Invalid contract index");
         // Move the last element into the deleted slot
         uint256 lastIndex = adapterIdsToAdapterInfo[adapterId].contracts.length - 1;
