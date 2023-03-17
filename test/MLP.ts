@@ -67,7 +67,7 @@ function getRandomNumber(min: number, max: number) {
   return Math.floor(Math.random() * (max - min) + min);
 }
 
-describe("🌞 Deployment of Deposit.Finance Protocol", async () => {
+describe("🌞 MLP Adapter tests", async () => {
   before(async () => {
     //   //We are forking Polygon mainnet, please set Alchemy key in .env
     //   await network.provider.request({
@@ -112,7 +112,7 @@ describe("🌞 Deployment of Deposit.Finance Protocol", async () => {
 
   })
 
-  describe("🌱 Check Vault Functionality", async () => {
+  describe("🌱 Check Vault / Adapter / Rewards", async () => {
 
       it("Test 1 : User Basic Compound", async () => {
         await stakedGLP.connect(owner).transfer(otherAccounts[0].address, parseUnits("1000", 18))
