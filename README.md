@@ -1,7 +1,3 @@
-# Important 
-
-// In contract Address from openzepellin l.185 delegatecall commented
-
 # Contracts Address
 ## Fantom Testnet
 ➜  DepositContracts git:(main) ✗ npx hardhat run scripts/deploy_testnet.ts --network fantom_testnet
@@ -15,20 +11,19 @@ MLP Adapter deployed to: 0xC3CCE338bC613F4c7aB05fd7730da020DA54D9BD
 
 # WIP
 [] -> fix mintInterval of deepfi token (actual testing 365 days)
-[~] -> Set claim first adapter
-[~] -> run tests
 [~] -> set withdraw fees on pools
+[~] -> run tests
 
 <img src="./VaultSchema.png" alt="Vault Schema"/>
 
 # D_Vault_SingleReward Contract
 [WIP]
-The D_Vault_SingleReward contract is a decentralized finance (DeFi) liquidity pool contract that allows users to deposit and earn returns on their deposited assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
+The D_Vault_SingleReward contract is a decentralized finance (DeFi) vault contract that allows users to deposit and earn returns on their deposited assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
 
 ## Features
 The D_Vault_SingleReward contract has the following features:
 
-Support for ERC20 tokens: Users can deposit ERC20 tokens into the liquidity pool and earn returns on their deposited assets.
+Support for ERC20 tokens: Users can deposit ERC20 tokens into the vault and earn returns on their deposited assets.
 
 Pausable: admins can pause and resume the contract, allowing for maintenance or emergency situations.
 
@@ -41,13 +36,17 @@ The D_Vault_SingleReward contract has the following functions:
 
 initialize: This function is called when the contract is deployed and is used to set up the contract, including setting the annual interest rate, update time limit, and liquidity handler address.
 
-deposit: This function allows users to deposit ERC20 tokens into the liquidity pool.
+deposit: This function allows users to deposit ERC20 tokens into the vault.
 
 withdraw: This function allows users to withdraw their deposited assets.
 
-claimReward: claim all rewards earned by staking.
+claimReward: claim all user rewards earned by staking.
 
 getRewardBalance: retrieve user available gains balance.
+
+getStakeBalance: retrieve user deposited balance.
+
+getTotalUserEarned : retrieve user claimed asset balance.
 
 setRewardsDuration: allow admins to increase duration of an ongoing reward, or set a new one
 
@@ -55,17 +54,15 @@ notifyRewardAmount: allow admins to increase amount of reward token, or set a ne
 
 setLiquidityHandler: This function allows admins to set the contract responsible for distributing money between the pool and the strategy.
 
-setTrustedForwarder: This function allows admins to set the trusted forwarder address, which is used to perform certain actions on behalf of the contract.
-
 
 # LiquidityHandler Contract
 [WIP]
-The LiquidityHandler contract is a contract that handles liquidity, allowing users to deposit and withdraw assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
+The LiquidityHandler contract is a contract that handles liquidity from vaults to adapters. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
 
 ## Features
 The LiquidityHandler contract has the following features:
 
-Liquidity Hub : centralizes and dispatches funds to the different strategies of the protocol, also handles withdrawals
+Liquidity Hub : centralizes and dispatches funds to the different strategies of the protocol, also handles deposit & withdrawals
 
 Pausable: admins can pause and resume the contract, allowing for maintenance or emergency situations.
 
@@ -78,9 +75,9 @@ The LiquidityHandler contract has the following functions:
 
 initialize: This function is called when the contract is deployed and is used to set up the contract, including setting the multi-sig wallet address and protocol governance token address.
 
-deposit: This function allows users to deposit assets into the platform.
+deposit: Called by Vault on user demand. This function allows users to deposit assets into the protocol.
 
-withdraw: This function allows users to withdraw their deposited assets.
+withdraw: Called by Vault on user demand. This function allows users to withdraw their deposited assets.
 
 addPool: This function allows admins to add a new Pool to the list of deployed pools.
 

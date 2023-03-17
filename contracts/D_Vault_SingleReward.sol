@@ -153,7 +153,7 @@ contract D_Vault_SingleReward is
     * @dev When called, update user reward balance, and transfer underlying asset from liquidity handler
     * @param _amount Amount to withdraw
     */
-    function withdraw(uint256 _amount) external updateReward(msg.sender) {
+    function withdraw(uint256 _amount) external whenNotPaused updateReward(msg.sender) {
         require(balanceOf[msg.sender] >= _amount, "Vault : amount too hight / balance too low");
         // uint256 fees = (_amount * 100) / 10000;
         // uint256 finalAmout = _amount - fees;
@@ -172,7 +172,7 @@ contract D_Vault_SingleReward is
     /**
     * @notice  Claim all msg.sender rewards earned by stacking assets
     */ 
-    function claimReward() external updateReward(msg.sender) {
+    function claimReward() external whenNotPaused updateReward(msg.sender) {
         uint reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
