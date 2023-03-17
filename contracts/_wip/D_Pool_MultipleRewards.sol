@@ -1,26 +1,18 @@
 // // SPDX-License-Identifier: MIT
 // pragma solidity ^0.8.9;
 
-
-// import "./interfaces/DefiERC20.sol";
-// import "./interfaces/ILiquidityHandler.sol";
+// import "../interfaces/ILiquidityHandler.sol";
 
 // import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 // import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-
-
-// // import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-// import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 // import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 // import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-// import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20PermitUpgradeable.sol";
 // import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 // import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-// contract D_Pool_MultipleRewards is 
+// contract D_Vault_SingleReward is 
 //         Initializable,
 //         PausableUpgradeable,
-//         // DefiERC20,
 //         AccessControlUpgradeable,
 //         UUPSUpgradeable
 // {
@@ -30,84 +22,66 @@
 //     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 //     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 //     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-//     // contract that will distribute money between the pool and the handler
-//     /// @custom:oz-renamed-from liquidityBuffer
+
+//     // contract that will distribute assets between vaults and adapters
 //     address public liquidityHandler;
 
 //     // flag for upgrades availability
 //     bool public upgradeStatus;
 
-//     // trusted forwarder address, see EIP-2771
-//     address public trustedForwarder;
+//     IERC20Upgradeable public stakingToken;
+//     IERC20Upgradeable[] public rewardTokens;
 
-//     IERC20Upgradeable public immutable stakingToken;
-//     IERC20Upgradeable[] public rewardsTokens;
-
-//     // Time for rewards to be paid in seconds
-//     uint public duration;
-//     // Timestamp of reward ending
-//     uint public finishAt;
-//     // Minimum of last updated time and reward finish time
-//     uint public updatedAt;
-//     // Reward in seconds
-//     uint public rewardRate;
-//     // Sum of (reward rate * dt * 1e18 / total supply)
-//     uint public rewardPerTokenStored;
-//     // Mapping of token address to token index
-//     mapping(address => uint) public rewardsTokensIndex;
-//     // User address => token index => rewardPerTokenStored
-//     mapping(address => mapping(uint => uint)) public userRewardPerTokenPaid;
-//     // User address => token index => rewards to be claimed
-//     mapping(address => mapping(uint => uint)) public rewards;
-
+//     string public vaultName;
 //     // Total staked
-//     uint public totalSupply;
+//     uint256 public totalSupply;
+//     // Time for rewards to be paid in seconds
+//     uint256 public duration;
+//     // Timestamp of reward ending
+//     uint256 public finishAt;
+//     // Minimum of last updated time and reward finish time
+//     uint256 public updatedAt;
+//     // Reward in seconds
+//     uint256 public rewardRate;
+//     // Sum of (reward rate * dt * 1e18 / total supply)
+//     uint256 public rewardPerTokenStored;
+//     // User address => rewardPerTokenStored
+//     mapping(address => uint256) public userRewardPerTokenPaid;
+//     // User address =>  rewards to be claimed
+//     // mapping(address => uint256) public rewards;
+//     mapping(address => mapping(IERC20Upgradeable => uint256)) public earnedRewards;
+
+//     // user address => total user earned bal
+//     // mapping(address => uint256) public earned;
+//     mapping(address => mapping(IERC20Upgradeable => uint256)) public earned;
 //     // User address => staked amount
-//     mapping(address => uint) public balanceOf;
+//     mapping(address => uint256) public balanceOf;
 
 
-//     // event BurnedForWithdraw(address indexed user, uint256 amount);
-//     // event Deposited(address indexed user, address token, uint256 amount);
-//     // event NewHandlerSet(address oldHandler, address newHandler);
-//     // event UpdateTimeLimitSet(uint256 oldValue, uint256 newValue);
-//     // event DepositTokenStatusChanged(address token, bool status);
-    
-//     // event InterestChanged(
-//     //     uint256 oldYearInterest,
-//     //     uint256 newYearInterest,
-//     //     uint256 oldInterestPerSecond,
-//     //     uint256 newInterestPerSecond
-//     // );
-    
-//     // event TransferAssetValue(
-//     //     address indexed from,
-//     //     address indexed to,
-//     //     uint256 tokenAmount,
-//     //     uint256 assetValue,
-//     //     uint256 growingRatio
-//     // );
+//     event Deposited(address indexed user, address token, uint256 amount);
+//     event Withdraw(address indexed user, uint256 amount);
+//     event Claim(address indexed user, uint256 amount);
+//     event NewHandlerSet(address oldHandler, address newHandler);
+//     event UpdateRewardDuration(uint256 oldValue, uint256 newValue);
+//     event UpdateRewardAmount(uint256 amount);
 
 
-
-//     /// @custom:oz-upgrades-unsafe-allow constructor
-//     constructor() {
-//         _disableInitializers();
-//     }
 
 //     /**
 //     * function to initialize the contract
-//     * @param _underlying_address the address of the underlying token
+//     * @param _vaultName the name of the vault
+//     * @param _stakingToken the address of the underlying token
+//     * @param _rewardTokens the address of the staking reward token 
 //     * @param _multiSigWallet the address of the multisig wallet associated with the contract
 //     * @param _handler the address of the liquidity handler contract
-//     * @param _trustedForwarder the address of the trusted forwarder
 //     */
 //     function initialize(
-//         address _underlying_address,
+//         string memory _vaultName,
+//         address _stakingToken,
+//         address[] memory _rewardTokens,
 //         address _multiSigWallet,
-//         address _handler,
-//         address _trustedForwarder
+//         address _handler
 //     ) initializer public {
-//         uint8 resDecimals = DefiERC20(_underlying_address).decimals();
 //         __Pausable_init();
 //         __AccessControl_init();
 //         __UUPSUpgradeable_init();
@@ -115,124 +89,165 @@
 //         _grantRole(DEFAULT_ADMIN_ROLE, _multiSigWallet);
 //         _grantRole(UPGRADER_ROLE, _multiSigWallet);
 //         _grantRole(PAUSER_ROLE, _multiSigWallet);
- 
-//         rewardsTokens.push(IERC20Upgradeable(_underlying_address));
-//         rewardsTokensIndex[_underlying_address] = 0;
 
+//         vaultName = _vaultName;
 //         liquidityHandler = _handler;
-//         trustedForwarder = _trustedForwarder;
-//     }
+//         stakingToken = IERC20Upgradeable(_stakingToken);
 
-//     /// @notice  Updates the user's claimable reward balance every time a user make an action
-//     /// @dev 
+//         for (uint256 i = 0; i < _rewardTokens.length; i++) {
+//             rewardTokens.push(IERC20Upgradeable(_rewardTokens[i]));
+//         }    }
+//     /**
+//     * @notice  Updates the user's claimable reward balance every time a user make an action
+//     */
+//     modifier updateReward(address _account) {
+//         uint256 length = rewardTokens.length;
 
-//     modifier updateReward(address _account, uint _tokenIndex) {
-//         rewardPerTokenStored = rewardPerToken(_tokenIndex);
-//         updatedAt = lastTimeRewardApplicable();
+//         for (uint256 i = 0; i < length; i++) {
+//             IERC20Upgradeable token = rewardTokens[i];
+//             uint256 rewardPerTokenStoredForToken = rewardPerToken(token);
+//             uint256 timeSinceLastUpdate = lastTimeRewardApplicable() - updatedAt;
+//             uint256 rewardRatePerTokenForToken = rewardRateForToken(token) * timeSinceLastUpdate * 1e18 / totalSupply;
+//             rewardPerTokenStoredForToken = rewardPerTokenStoredForToken + rewardRatePerTokenForToken;
 
-//         if (_account != address(0)) {
-//             rewards[_account][_tokenIndex] = getRewardBalance(_account, _tokenIndex);
-//             userRewardPerTokenPaid[_account][_tokenIndex] = rewardPerTokenStored;
+//             if (_account != address(0)) {
+//                 earnedRewards[_account][token] = earnedRewards[_account][token] + getRewardBalanceForToken(_account, token);
+//                 userRewardPerTokenPaid[_account][token] = rewardPerTokenStoredForToken;
+//             }
 //         }
+
+//         rewardPerTokenStored = rewardPerToken();
+//         updatedAt = lastTimeRewardApplicable();
 
 //         _;
 //     }
 
-//     function lastTimeRewardApplicable() public view returns (uint) {
+//     function lastTimeRewardApplicable() internal view returns (uint) {
 //         return _min(finishAt, block.timestamp);
 //     }
 
-//     function rewardPerToken(uint _tokenIndex) public view returns (uint) {
+//     function rewardPerToken() public view returns (uint256) {
 //         if (totalSupply == 0) {
 //             return rewardPerTokenStored;
 //         }
 
-//         return
-//             rewardPerTokenStored +
-//             (rewardRate * (lastTimeRewardApplicable() - updatedAt) * 1e18) /
-//             totalSupply;
+//         uint256 rewardDuration = lastTimeRewardApplicable() - updatedAt;
+//         uint256 rewardRatePerToken = rewardRate * rewardDuration * 1e18 / totalSupply;
+//         return rewardPerTokenStored + rewardRatePerToken;
 //     }
-//     /// @notice  Deposit user assets .
-//     /// @dev When called, reward is updated, then asset token is sent to the LiquidityHandler
-//     /// @param _amount Amount to deposit
+//     /**
+//     * @notice  Retrieve user actual claimable balance.
+//     */
+// function getRewardBalance(address _account) public view returns (uint256) {
+//         uint256 length = rewardTokens.length;
+//         uint256 totalReward = rewards[_account];
 
+//         for (uint256 i = 0; i < length; i++) {
+//             IERC20Upgradeable token = rewardTokens[i];
+//             uint256 earnedRewardForToken = earnedRewards[_account][token];
+//             uint256 accountRewardPerTokenPaidForToken = userRewardPerTokenPaid[_account][token];
+//             uint256 rewardPerTokenDiffForToken = rewardPerToken(token) - accountRewardPerTokenPaidForToken;
+//             uint256 rewardForToken = balanceOf[_account] * rewardPerTokenDiffForToken / 1e18;
+//             totalReward = totalReward + earnedRewardForToken + rewardForToken;
+//         }
+
+//         return totalReward;
+//     }
+
+//     /**
+//     * @notice  Stake user assets.
+//     * @dev When called, reward is updated, then asset token is sent to the LiquidityHandler / Adapter
+//     * @param _amount Amount to deposit
+//     */
 //     function deposit(uint256 _amount) external whenNotPaused updateReward(msg.sender) {
-//         require(_amount > 0, "IBToken : Invalid amount");
-//         // uint256 priceInWei = _amount * (10 ** decimals());
-//         stakingToken.safeTransferFrom(msg.sender,address(liquidityHandler),_amount);
+//         require(_amount > 0, "Vault : Invalid amount");
+//         stakingToken.safeTransferFrom(msg.sender, address(liquidityHandler), _amount);
+//         ILiquidityHandler handler = ILiquidityHandler(liquidityHandler);
+//         handler.deposit(address(stakingToken), _amount); // protocol / token to claim
         
 //         balanceOf[msg.sender] += _amount;
-//         totalSupply += _amount;
-//         // claim potential reward for protocol if theres any
-//         // ILiquidityHandler(liquidityHandler).deposit(1, stakeTokenAddress); // protocol / token to claim
-     
+//         totalSupply += _amount;     
       
-//         // emit TransferAssetValue(address(0), _msgSender(), _amount, amountIn18);
-//         // emit Deposited(_msgSender(), stakeTokenAddress, _amount);
+//         emit Deposited(msg.sender, address(stakingToken), _amount);
 //     }
 
-//     /// @notice  Withdraws assets deposited by msg.sender
-//     /// @dev When called, update user reward balance, and transfer underlying asset from liquidity handler
-//     /// @param _amount Amount to withdraw
-
-//     function withdraw(uint256 _amount) public updateReward(msg.sender) {
-//         // uint256 adjustedAmount = _amount * 10**(18 - decimals());
+//     /**
+//     * @notice  Withdraws assets deposited by msg.sender
+//     * @dev When called, update user reward balance, and transfer underlying asset from liquidity handler
+//     * @param _amount Amount to withdraw
+//     */
+//     function withdraw(uint256 _amount) external updateReward(msg.sender) {
+//         require(balanceOf[msg.sender] >= _amount, "amount too hight / balance too low");
+//         // uint256 fees = (_amount * 100) / 10000;
+//         // uint256 finalAmout = _amount - fees;
 //         ILiquidityHandler handler = ILiquidityHandler(liquidityHandler);
 //         handler.withdraw(
 //             msg.sender,
 //             address(stakingToken),
 //             _amount
 //         );
+//         balanceOf[msg.sender] -= _amount;
+//         totalSupply -= _amount;
 
-//         // emit TransferAssetValue(_msgSender(), address(0), _amount);
-//         // emit BurnedForWithdraw(_msgSender(), _amount);
+//         emit Withdraw(msg.sender, _amount);
 //     }
 
-//     // / @notice  Claim reward earned by stacking assets
-//     // / @dev 
-//     // / @param _amount Amount to withdraw
-
-//     // function requestRewards(uint256 _amount) external {
-//     //     updateReward(msg.sender);
-//     //     // uint256 priceInWei = _amount * (10 ** decimals());
-//     //     require(user_data[msg.sender].bal_claimable >= _amount, "Not Enough Funds");
-        
-//     //     ILiquidityHandler handler = ILiquidityHandler(liquidityHandler);
-//     //     handler.claimUserReward(
-//     //         msg.sender,
-//     //         _amount
-//     //     );
-//     //     user_data[msg.sender].bal_claimable -= _amount;
-//     // }
-
-//     function claimReward(uint _tokenIndex) external updateReward(msg.sender, _tokenIndex) {
-//         uint reward = rewards[msg.sender][_tokenIndex];
+//     /**
+//     * @notice  Claim all msg.sender rewards earned by stacking assets
+//     */ 
+//     function claimReward() external updateReward(msg.sender) {
+//         uint reward = rewards[msg.sender];
 //         if (reward > 0) {
-//             rewards[msg.sender][_tokenIndex] = 0;
-//             IERC20Upgradeable token = rewardsTokens[_tokenIndex];
-//             token.transfer(msg.sender, reward);
+//             rewards[msg.sender] = 0;
+//             rewardsToken.transfer(msg.sender, reward);
+//             earned[msg.sender] += reward;
+//             emit Claim(msg.sender, reward);
 //         }
 //     }
-//     function getRewardBalance(address _account, uint _tokenIndex) public view returns (uint) {
-//         return balanceOf[_account] * (
-//             (rewardPerToken(_tokenIndex) - userRewardPerTokenPaid[_account][_tokenIndex]) / 1e18
-//         ) + rewards[_account][_tokenIndex];
-//     }
-//     //     return
-//     //         ((balanceOf[_account] *
-//     //             (rewardPerToken(_tokenIndex) - userRewardPerTokenPaid[_account][_tokenIndex])) / 1e18) +
-//     //         rewards[_account][_tokenIndex];
-//     // }
 
+//     /**
+//     * @notice  return _account staked assets amount
+//     */ 
+//     function getStakeBalance(address _account) external view returns (uint) {
+//         return balanceOf[_account];
+//     }
+
+//     /**
+//     * @notice  return _account total claimed assets amount
+//     */ 
+//     function getTotalUserEarned(address _account) external view returns (uint) {
+//         return earned[_account];
+//     }
+
+//     function _min(uint x, uint y) private pure returns (uint) {
+//         return x <= y ? x : y;
+//     }
+
+//     function getStakeToken() external view returns (address) {
+//         return address(stakingToken);
+//     }
+
+//     function getRewardToken() external view returns (address) {
+//         return address(rewardsToken);
+//     }
+
+//     /* ========== ADMIN CONFIGURATION ========== */
+//      /**
+//      * @dev Update the reward distribution duration. Only callable by the contract owner.
+//      * @param _duration The new reward duration in seconds
+//      */
 //     function setRewardsDuration(uint _duration) external onlyRole(DEFAULT_ADMIN_ROLE) {
 //         require(finishAt < block.timestamp, "reward duration not finished");
+//         uint256 oldDuration = duration;
 //         duration = _duration;
+//         emit UpdateRewardDuration(oldDuration, _duration);
 //     }
 
-//     function notifyRewardAmount(
-//         uint _amount
-        
-//     ) external onlyRole(DEFAULT_ADMIN_ROLE) updateReward(address(0)) {
+//     /**
+//      * @dev Update the reward rate. Only callable by the contract owner.
+//      * @param _amount The new reward amount per second
+//      */
+//     function notifyRewardAmount(uint _amount) external onlyRole(DEFAULT_ADMIN_ROLE) updateReward(address(0)) {
 //         if (block.timestamp >= finishAt) {
 //             rewardRate = _amount / duration;
 //         } else {
@@ -242,79 +257,28 @@
 
 //         require(rewardRate > 0, "reward rate = 0");
 //         require(
-//             rewardRate * duration <= rewardsTokens.balanceOf(address(this)),
+//             rewardRate * duration <= rewardsToken.balanceOf(address(this)),
 //             "reward amount > balance"
 //         );
 
 //         finishAt = block.timestamp + duration;
 //         updatedAt = block.timestamp;
+//         emit UpdateRewardAmount(_amount);
 //     }
 
-//     function _min(uint x, uint y) private pure returns (uint) {
-//         return x <= y ? x : y;
-//     }
-
-//     function getStakeToken() public view returns (address) {
-//         return address(stakingToken);
-//     }
-
-//     function isTrustedForwarder(address forwarder)
-//         public
-//         view
-//         virtual
-//         returns (bool)
-//     {
-//         return forwarder == trustedForwarder;
-//     }
-
-//     /* ========== ADMIN CONFIGURATION ========== */
-
-//     // /// @notice  Sets the new interest rate
-//     // /// @dev When called, it sets the new interest rate after updating the index.
-//     // /// @param _newAnnualInterest New annual interest rate with 2 decimals 850 == 8.50%
-//     // /// @param _newInterestPerSecond New interest rate = interest per second (100000000244041000*10**10 == 8% APY)
-
-//     // function setInterest(
-//     //     uint256 _newAnnualInterest,
-//     //     uint256 _newInterestPerSecond
-//     // ) public onlyRole(DEFAULT_ADMIN_ROLE) {
-//     //     uint256 oldAnnualValue = annualInterest;
-//     //     annualInterest = _newAnnualInterest;
-//     //     // interestPerSecond = _newInterestPerSecond * 10**10;
-
-//     //     // emit InterestChanged(
-//     //     //     oldAnnualValue,
-//     //     //     annualInterest
-//     //     // );
-//     // }
-
-//     // function setUpdateTimeLimit(uint256 _newLimit)
-//     //     public
-//     //     onlyRole(DEFAULT_ADMIN_ROLE)
-//     // {
-//     //     uint256 oldValue = updateTimeLimit;
-//     //     updateTimeLimit = _newLimit;
-
-//     //     // emit UpdateTimeLimitSet(oldValue, _newLimit);
-//     // }
-
-
-//     function setLiquidityHandler(address newHandler)
+//     /**
+//      * @dev Changes the liquidity handler contract address
+//      * @param _newHandler Address of the new liquidity handler contract
+//      */
+//     function setLiquidityHandler(address _newHandler)
 //         external
 //         onlyRole(DEFAULT_ADMIN_ROLE)
 //     {
-//         require(newHandler.isContract(), "IBToken: Not contract");
+//         require(_newHandler.isContract(), "Vault: Not contract");
 
 //         address oldValue = liquidityHandler;
-//         liquidityHandler = newHandler;
-//         // emit NewHandlerSet(oldValue, liquidityHandler);
-//     }
-
-//     function setTrustedForwarder(address newTrustedForwarder)
-//         external
-//         onlyRole(DEFAULT_ADMIN_ROLE)
-//     {
-//         trustedForwarder = newTrustedForwarder;
+//         liquidityHandler = _newHandler;
+//         emit NewHandlerSet(oldValue, liquidityHandler);
 //     }
 
 //     function changeUpgradeStatus(bool _status)
@@ -331,41 +295,13 @@
 //     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
 //         _unpause();
 //     }
-
-//     function grantRole(bytes32 role, address account)
-//         public
-//         override
-//         onlyRole(getRoleAdmin(role))
-//     {
-//         if (role == DEFAULT_ADMIN_ROLE) {
-//             require(account.isContract(), "IBToken: Not contract");
-//         }
-//         _grantRole(role, account);
-//     }
-
-//     // function _msgSender()
-//     //     internal
-//     //     view
-//     //     virtual
-//     //     override
-//     //     returns (address sender)
-//     // {
-//     //     if (isTrustedForwarder(msg.sender)) {
-//     //         // The assembly code is more direct than the Solidity version using `abi.decode`.
-//     //         assembly {
-//     //             sender := shr(96, calldataload(sub(calldatasize(), 20)))
-//     //         }
-//     //     } else {
-//     //         return super._msgSender();
-//     //     }
-//     // }
     
 //     function _authorizeUpgrade(address)
 //         internal
 //         override
 //         onlyRole(UPGRADER_ROLE)
 //     {
-//         require(upgradeStatus, "IBToken: Upgrade not allowed");
+//         require(upgradeStatus, "Vault: Upgrade not allowed");
 //         upgradeStatus = false;
 //     }
 // }

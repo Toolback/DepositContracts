@@ -50,8 +50,8 @@ async function deploy_testnet() {
   const MLPAdapter = await ethers.getContractFactory("MlpAdapter");
 
   let mlpAdapter = await upgrades.deployProxy(MLPAdapter,
-    // handler / staking token / reward token / admin
-    [handler.address, testtoken.address, erc20.address, gnosis, "0x7b9e962dd8AeD0Db9A1D8a2D7A962ad8b871Ce4F"],
+    // handler / staking token admin
+    [handler.address, testtoken.address, gnosis],
     { initializer: 'initialize', kind: 'uups' }
   );
 

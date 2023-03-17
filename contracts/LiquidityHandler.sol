@@ -10,11 +10,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 // import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableMapUpgradeable.sol";
 
-// import "./interfaces/IBDeepfy.sol";
 import "./interfaces/IAdapter.sol";
-import "hardhat/console.sol";
-
-
 import "hardhat/console.sol";
 
 contract LiquidityHandler is
@@ -60,7 +56,7 @@ contract LiquidityHandler is
 
     modifier onlyPool(address _sender)
     {
-        require (PoolToAdapterId.contains(_sender), "sender should be pool");
+        require (PoolToAdapterId.contains(_sender), "Handler : sender should be pool");
         _;
     }
 
@@ -88,6 +84,7 @@ contract LiquidityHandler is
         onlyPool(msg.sender)
     {
         uint256 adapterId = PoolToAdapterId.get(msg.sender);
+        require(adapterIdsToAdapterInfo[adapterId].status, "Handler : Adapter Inactive");
         address adapter = adapterIdsToAdapterInfo[adapterId].adapterAddress;
         // uint256 leaveInPool = ;
 
@@ -223,7 +220,7 @@ contract LiquidityHandler is
         uint256 _adapterId, 
         ContractsInfo memory _newContractInfo
     ) public {
-        require(adapterIdsToAdapterInfo[_adapterId].status, "Adapter is not active");
+        require(adapterIdsToAdapterInfo[_adapterId].status, "Handler : Adapter is not active");
         adapterIdsToAdapterInfo[_adapterId].contracts.push(_newContractInfo);
     }
 
@@ -231,7 +228,7 @@ contract LiquidityHandler is
         uint256 adapterId, 
         uint256 contractIndex
     ) public {
-    require(adapterIdsToAdapterInfo[adapterId].contracts.length > contractIndex, "Invalid contract index");
+    require(adapterIdsToAdapterInfo[adapterId].contracts.length > contractIndex, "Handler : Invalid contract index");
         // Move the last element into the deleted slot
         uint256 lastIndex = adapterIdsToAdapterInfo[adapterId].contracts.length - 1;
         adapterIdsToAdapterInfo[adapterId].contracts[contractIndex] = adapterIdsToAdapterInfo[adapterId].contracts[lastIndex];

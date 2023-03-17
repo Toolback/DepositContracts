@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-
 import "./interfaces/ILiquidityHandler.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20PermitUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "./DeepfiToken.sol";
 
 contract D_Vault_SingleReward is 
         Initializable,
@@ -25,8 +22,8 @@ contract D_Vault_SingleReward is
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    // contract that will distribute money between the pool and the handler
-    /// @custom:oz-renamed-from liquidityBuffer
+
+    // contract that will distribute assets between vaults and adapters
     address public liquidityHandler;
 
     // flag for upgrades availability
@@ -53,39 +50,23 @@ contract D_Vault_SingleReward is
     // User address =>  rewards to be claimed
     mapping(address => uint256) public rewards;
     // user address => total user earned bal
-    mapping(address => uint256) public earned;
+    mapping(address => uint256) public totalClaimed;
     // User address => staked amount
     mapping(address => uint256) public balanceOf;
 
 
-    // event BurnedForWithdraw(address indexed user, uint256 amount);
-    // event Deposited(address indexed user, address token, uint256 amount);
-    // event NewHandlerSet(address oldHandler, address newHandler);
-    // event UpdateTimeLimitSet(uint256 oldValue, uint256 newValue);
-    
-    // event InterestChanged(
-    //     uint256 oldYearInterest,
-    //     uint256 newYearInterest,
-    //     uint256 oldInterestPerSecond,
-    //     uint256 newInterestPerSecond
-    // );
-    
-    // event TransferAssetValue(
-    //     address indexed from,
-    //     address indexed to,
-    //     uint256 tokenAmount,
-    //     uint256 assetValue,
-    //     uint256 growingRatio
-    // );
+    event Deposited(address indexed user, address token, uint256 amount);
+    event Withdraw(address indexed user, uint256 amount);
+    event Claim(address indexed user, uint256 amount);
+    event NewHandlerSet(address oldHandler, address newHandler);
+    event UpdateRewardDuration(uint256 oldValue, uint256 newValue);
+    event UpdateRewardAmount(uint256 amount);
 
 
-
-    // /// @custom:oz-upgrades-unsafe-allow constructor
-    // constructor() initializer {}
-    // // _disableInitializers();
 
     /**
     * function to initialize the contract
+    * @param _vaultName the name of the vault
     * @param _stakingToken the address of the underlying token
     * @param _rewardsToken the address of the staking reward token 
     * @param _multiSigWallet the address of the multisig wallet associated with the contract
@@ -107,15 +88,13 @@ contract D_Vault_SingleReward is
         _grantRole(PAUSER_ROLE, _multiSigWallet);
 
         vaultName = _vaultName;
- 
+        liquidityHandler = _handler;
         stakingToken = IERC20Upgradeable(_stakingToken);
         rewardsToken = IERC20Upgradeable(_rewardsToken);
-
-        liquidityHandler = _handler;
     }
-
-    /// @notice  Updates the user's claimable reward balance every time a user make an action
-    /// @dev 
+    /**
+    * @notice  Updates the user's claimable reward balance every time a user make an action
+    */
     modifier updateReward(address _account) {
         rewardPerTokenStored = rewardPerToken();
         updatedAt = lastTimeRewardApplicable();
@@ -128,48 +107,35 @@ contract D_Vault_SingleReward is
         _;
     }
 
-    function lastTimeRewardApplicable() public view returns (uint) {
+    function lastTimeRewardApplicable() internal view returns (uint) {
         return _min(finishAt, block.timestamp);
     }
 
-    // function rewardPerToken() public view returns (uint) {
-    //     if (totalSupply == 0) {
-    //         return rewardPerTokenStored;
-    //     }
-
-    //     return
-    //         rewardPerTokenStored +
-    //         (rewardRate * (lastTimeRewardApplicable() - updatedAt) * 1e18) /
-    //         totalSupply;
-    // }
-
-    // function getRewardBalance(address _account) public view returns (uint) {
-    //     return balanceOf[_account] * (
-    //         (rewardPerToken() - userRewardPerTokenPaid[_account]) / 1e18
-    //     ) + rewards[_account];
-    // }
     function rewardPerToken() public view returns (uint256) {
-    if (totalSupply == 0) {
-        return rewardPerTokenStored;
+        if (totalSupply == 0) {
+            return rewardPerTokenStored;
+        }
+
+        uint256 rewardDuration = lastTimeRewardApplicable() - updatedAt;
+        uint256 rewardRatePerToken = rewardRate * rewardDuration * 1e18 / totalSupply;
+        return rewardPerTokenStored + rewardRatePerToken;
+    }
+    /**
+    * @notice  Retrieve user actual claimable balance.
+    */
+    function getRewardBalance(address _account) public view returns (uint256) {
+        uint256 earnedReward = rewards[_account];
+        uint256 accountRewardPerTokenPaid = userRewardPerTokenPaid[_account];
+        uint256 rewardPerTokenDiff = rewardPerToken() - accountRewardPerTokenPaid;
+        uint256 reward = balanceOf[_account] * rewardPerTokenDiff / 1e18;
+        return earnedReward + reward;
     }
 
-    uint256 rewardDuration = lastTimeRewardApplicable() - updatedAt;
-    uint256 rewardRatePerToken = rewardRate * rewardDuration * 1e18 / totalSupply;
-    return rewardPerTokenStored + rewardRatePerToken;
-}
-
-function getRewardBalance(address _account) public view returns (uint256) {
-    uint256 earnedReward = rewards[_account];
-    uint256 accountRewardPerTokenPaid = userRewardPerTokenPaid[_account];
-    uint256 rewardPerTokenDiff = rewardPerToken() - accountRewardPerTokenPaid;
-    uint256 reward = balanceOf[_account] * rewardPerTokenDiff / 1e18;
-    return earnedReward + reward;
-}
-
-    /// @notice  Deposit user assets .
-    /// @dev When called, reward is updated, then asset token is sent to the LiquidityHandler
-    /// @param _amount Amount to deposit
-
+    /**
+    * @notice  Stake user assets.
+    * @dev When called, reward is updated, then asset token is sent to the LiquidityHandler / Adapter
+    * @param _amount Amount to deposit
+    */
     function deposit(uint256 _amount) external whenNotPaused updateReward(msg.sender) {
         require(_amount > 0, "Vault : Invalid amount");
         stakingToken.safeTransferFrom(msg.sender, address(liquidityHandler), _amount);
@@ -179,70 +145,85 @@ function getRewardBalance(address _account) public view returns (uint256) {
         balanceOf[msg.sender] += _amount;
         totalSupply += _amount;     
       
-        // emit TransferAssetValue(address(0), _msgSender(), _amount, amountIn18);
-        // emit Deposited(_msgSender(), stakeTokenAddress, _amount);
+        emit Deposited(msg.sender, address(stakingToken), _amount);
     }
 
-    /// @notice  Withdraws assets deposited by msg.sender
-    /// @dev When called, update user reward balance, and transfer underlying asset from liquidity handler
-    /// @param _amount Amount to withdraw
-
-    function withdraw(uint256 _amount) public updateReward(msg.sender) {
-        require(balanceOf[msg.sender] >= _amount, "amount too hight / balance too low");
+    /**
+    * @notice  Withdraws assets deposited by msg.sender
+    * @dev When called, update user reward balance, and transfer underlying asset from liquidity handler
+    * @param _amount Amount to withdraw
+    */
+    function withdraw(uint256 _amount) external updateReward(msg.sender) {
+        require(balanceOf[msg.sender] >= _amount, "Vault : amount too hight / balance too low");
         // uint256 fees = (_amount * 100) / 10000;
         // uint256 finalAmout = _amount - fees;
         ILiquidityHandler handler = ILiquidityHandler(liquidityHandler);
         handler.withdraw(
-            super._msgSender(),
+            msg.sender,
             address(stakingToken),
             _amount
         );
         balanceOf[msg.sender] -= _amount;
         totalSupply -= _amount;
 
-        // emit TransferAssetValue(_msgSender(), address(0), _amount);
-        // emit BurnedForWithdraw(_msgSender(), _amount);
+        emit Withdraw(msg.sender, _amount);
     }
 
-    // / @notice  Claim reward earned by stacking assets
-    // / @dev 
-    // / @param _amount Amount to withdraw
-
+    /**
+    * @notice  Claim all msg.sender rewards earned by stacking assets
+    */ 
     function claimReward() external updateReward(msg.sender) {
         uint reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
             rewardsToken.transfer(msg.sender, reward);
-            earned[msg.sender] += reward;
+            totalClaimed[msg.sender] += reward;
+            emit Claim(msg.sender, reward);
         }
     }
 
-    function getStakeBalance(address _account) public view returns (uint) {
+    /**
+    * @notice  return _account staked assets amount
+    */ 
+    function getStakeBalance(address _account) external view returns (uint) {
         return balanceOf[_account];
     }
 
-    function getTotalUserEarned(address _account) public view returns (uint) {
-        return earned[_account];
+    /**
+    * @notice  return _account total claimed assets amount
+    */ 
+    function getTotalUserEarned(address _account) external view returns (uint) {
+        return totalClaimed[_account];
     }
 
     function _min(uint x, uint y) private pure returns (uint) {
         return x <= y ? x : y;
     }
 
-    function getStakeToken() public view returns (address) {
+    function getStakeToken() external view returns (address) {
         return address(stakingToken);
     }
 
-    function getRewardToken() public view returns (address) {
+    function getRewardToken() external view returns (address) {
         return address(rewardsToken);
     }
 
     /* ========== ADMIN CONFIGURATION ========== */
+     /**
+     * @dev Update the reward distribution duration. Only callable by the contract owner.
+     * @param _duration The new reward duration in seconds
+     */
     function setRewardsDuration(uint _duration) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(finishAt < block.timestamp, "reward duration not finished");
+        require(finishAt < block.timestamp, "Vault : reward duration not finished");
+        uint256 oldDuration = duration;
         duration = _duration;
+        emit UpdateRewardDuration(oldDuration, _duration);
     }
 
+    /**
+     * @dev Update the reward rate. Only callable by the contract owner.
+     * @param _amount The new reward amount per second
+     */
     function notifyRewardAmount(uint _amount) external onlyRole(DEFAULT_ADMIN_ROLE) updateReward(address(0)) {
         if (block.timestamp >= finishAt) {
             rewardRate = _amount / duration;
@@ -251,25 +232,30 @@ function getRewardBalance(address _account) public view returns (uint256) {
             rewardRate = (_amount + remainingRewards) / duration;
         }
 
-        require(rewardRate > 0, "reward rate = 0");
+        require(rewardRate > 0, "Vault : reward rate = 0");
         require(
             rewardRate * duration <= rewardsToken.balanceOf(address(this)),
-            "reward amount > balance"
+            "Vault : reward amount > balance"
         );
 
         finishAt = block.timestamp + duration;
         updatedAt = block.timestamp;
+        emit UpdateRewardAmount(_amount);
     }
 
-    function setLiquidityHandler(address newHandler)
+    /**
+     * @dev Changes the liquidity handler contract address
+     * @param _newHandler Address of the new liquidity handler contract
+     */
+    function setLiquidityHandler(address _newHandler)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        require(newHandler.isContract(), "Vault: Not contract");
+        require(_newHandler.isContract(), "Vault: Not contract");
 
         address oldValue = liquidityHandler;
-        liquidityHandler = newHandler;
-        // emit NewHandlerSet(oldValue, liquidityHandler);
+        liquidityHandler = _newHandler;
+        emit NewHandlerSet(oldValue, liquidityHandler);
     }
 
     function changeUpgradeStatus(bool _status)
@@ -286,14 +272,6 @@ function getRewardBalance(address _account) public view returns (uint256) {
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }
-
-    // function grantRole(bytes32 role, address account)
-    //     public
-    //     override
-    //     onlyRole(getRoleAdmin(role))
-    // {
-    //     _grantRole(role, account);
-    // }
     
     function _authorizeUpgrade(address)
         internal

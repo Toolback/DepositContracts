@@ -1,6 +1,6 @@
 import { ethers, upgrades } from "hardhat"
 
-async function deploy_tests(owner: any, stakingToken: any) {
+async function deploy_hardhat(owner: any, stakingToken: any) {
 	// Test Token (only for tests)
 	const TestToken6 = await ethers.getContractFactory("FakeToken");
 
@@ -56,8 +56,8 @@ async function deploy_tests(owner: any, stakingToken: any) {
 	const MLPAdapter = await ethers.getContractFactory("MlpAdapter");
 
 	let mlp_adapter = await upgrades.deployProxy(MLPAdapter,
-		// reward_router address (mummy contract)/ handler / staking token / reward token / admin
-		[handler.address, stakingToken.address, deepfiToken.address, owner.address, "0x7b9e962dd8AeD0Db9A1D8a2D7A962ad8b871Ce4F"],
+		// reward_router address (mummy contract)/ handler / staking token / admin
+		[handler.address, stakingToken.address, owner.address],
 		{ initializer: 'initialize', kind: 'uups' }
 	);
 
@@ -80,4 +80,4 @@ async function deploy_tests(owner: any, stakingToken: any) {
 }
 
 
-export default deploy_tests;
+export default deploy_hardhat;

@@ -2,11 +2,7 @@
 pragma solidity ^0.8.9;
 
 interface IAdapter {
-    function deposit(
-        address _token,
-        uint256 _amount
-        // uint256 leaveInPool
-    ) external;
+    function deposit(address _token, uint256 _amount) external;
 
     function withdraw(address _user, address _token, uint256 _amount) external;
 

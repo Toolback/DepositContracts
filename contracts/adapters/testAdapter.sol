@@ -64,10 +64,7 @@ contract testAdapter is
 
     function claimReward() internal
     {
-        // claim reward from mummy
-
-        // transfer reward to treasu
-        // IERC20Upgradeable(reward_token).safeTransfer(treasury, type(uint256).max);
+        return;
     }
 
     function deposit(address _token, uint256 _amount) external onlyRole(HANDLER_ROLE)
