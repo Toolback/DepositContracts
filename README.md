@@ -1,14 +1,14 @@
 # Contracts Address
 ## Fantom Testnet
 ➜  DepositContracts git:(main) ✗ npx hardhat run scripts/deploy_testnet.ts --network fantom_testnet
-Test Token 1 (18 decimals) deployed to: 0x97d8a4c69499c944c4EcFBb48fE563E53749b823
-Test Token 2 (6 decimals) deployed to: 0xC3c263D1B2F9a1b7de8231000552011F4102FFCE
-Deepfi Token deployed to: 0x89778246158Da1bf386E0fa1bb661cE5465B08F4
-Handler deployed to: 0x0961E3c4A37415364792Ddf0F1B5809350ce35BF
-MLP Vault deployed to: 0xC865155957093435F712BEcB25A62c3245a16199
-MLP Adapter deployed to: 0xc4796A2dB89a04dEFFc12509C15561BC145F86B6
-EQZ Vault deployed to: 0x61D445dD4B07C1C0DEeA24EcaD7e8C8d1BB8dBC4
-EQZ Adapter deployed to: 0x0a7045214fdc8082B6f6755B528dC14Bf7253767
+Test Token 1 (18 decimals) deployed to: 0x410949Ed1ed5d8ac7A8f024b200da766C48217ed  
+Test Token 2 (6 decimals) deployed to: 0x41BEf4AfcAcc42D7906eed8bd87147F37F68EF14   
+Deepfi Token deployed to: 0xc05ce0bb5e0F7D14a4003FBeBBB909C9DEe988f0
+Handler deployed to: 0xc14437ff07aEF48CE97410171A31C13956fa9047
+MLP Vault deployed to: 0xE1F390e00Da8E5Acb83De3b3a9Ab829be5b49F4c
+MLP Adapter deployed to: 0x4FEb39BF919fA7370c6257Abd518302B365EDdBe
+EQZ Vault deployed to: 0x35d8F28808e1A6058032895843f9b50A892B2900
+EQZ Adapter deployed to: 0xEa0Da285DEdE06e12cA6289A40fD70A787FF2859
 
 ## Fantom Mainnet
 

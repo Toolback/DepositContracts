@@ -152,7 +152,7 @@ contract D_Vault_SingleReward is
         uint256 finalAmount = _amount - fees;
         ILiquidityHandler handler = ILiquidityHandler(liquidityHandler);
         handler.withdraw(
-            address(this),
+            msg.sender,
             address(stakingToken),
             _amount,
             finalAmount,
