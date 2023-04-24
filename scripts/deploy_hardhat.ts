@@ -37,7 +37,7 @@ async function deploy_hardhat(owner: any, stakingToken: any) {
 	const Handler = await ethers.getContractFactory("LiquidityHandler");
 
 	let handler = await upgrades.deployProxy(Handler,
-		// admin, deepfi token
+		// admin
 		[owner.address],
 		{ initializer: 'initialize', kind: 'uups' }
 	);
@@ -57,7 +57,7 @@ async function deploy_hardhat(owner: any, stakingToken: any) {
 
 	let mlp_adapter = await upgrades.deployProxy(MLPAdapter,
 		// reward_router address (mummy contract)/ handler / staking token / admin
-		[handler.address, stakingToken.address, owner.address],
+		[owner.address, handler.address, stakingToken.address, owner.address],
 		{ initializer: 'initialize', kind: 'uups' }
 	);
 

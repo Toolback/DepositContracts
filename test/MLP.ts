@@ -8,7 +8,7 @@ const IERC20 = require("../ABI/ERC20Abi.json")
 var assert = require('chai').assert
 import RewardRouterAbi from "../ABI/RewardRouterAbi.json";
 
-const gnosis = "0x25b3d91e2cbAe2397749f2F9A5598366Df26fA49";
+const gnosis = "0x4a8cF400cd00D54C784D910571Da49a4e4F3c866";
 let owner: SignerWithAddress, otherAccounts: SignerWithAddress[];
 let fsMLPWhale2: any = "0xce52c2e8e54cc717d1b35ac730406141ddccb47d";
 let fsMLPWhale1: any = "0x08048f6d9db401d2716dcbb1979513231e5e3c81";
@@ -67,7 +67,7 @@ function getRandomNumber(min: number, max: number) {
   return Math.floor(Math.random() * (max - min) + min);
 }
 
-describe("🌞 MLP Adapter tests", async () => {
+describe("🌞 MLP Adapter Test", async () => {
   before(async () => {
     //   //We are forking Polygon mainnet, please set Alchemy key in .env
     //   await network.provider.request({

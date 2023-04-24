@@ -108,8 +108,8 @@ describe("🌞 Protocol Features Test", async () => {
     const MLPAdapter6 = await ethers.getContractFactory("testAdapter");
 
     let testAdapter6 = await upgrades.deployProxy(MLPAdapter6,
-      // handler / staking token / reward token / admin
-      [handler.address, testToken6.address, deepfiToken.address, owner.address],
+      // treasury / handler / staking token / reward token / admin
+      [owner.address, handler.address, testToken6.address, deepfiToken.address, owner.address],
       { initializer: 'initialize', kind: 'uups' }
     );
     // const adapterId = await handler.getLastAdapterIndex();
@@ -130,11 +130,11 @@ describe("🌞 Protocol Features Test", async () => {
     );
 
     // Test Adapter18
-    const MLPAdapter18 = await ethers.getContractFactory("testAdapter");
+    const TESTAdapter18 = await ethers.getContractFactory("testAdapter");
 
-    let testAdapter18 = await upgrades.deployProxy(MLPAdapter18,
-      // handler / staking token / reward token / admin
-      [handler.address, testToken18.address, deepfiToken.address, owner.address],
+    let testAdapter18 = await upgrades.deployProxy(TESTAdapter18,
+      // treasury / handler / staking token / reward token / admin
+      [owner.address, handler.address, testToken18.address, deepfiToken.address, owner.address],
       { initializer: 'initialize', kind: 'uups' }
     );
 

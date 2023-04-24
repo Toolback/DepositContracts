@@ -40,6 +40,7 @@ contract testAdapter is
     // }
 
     function initialize(
+        address _treasury,
         address _handlerAddress,
         address _staking_token,
         address _reward_token,
@@ -55,7 +56,8 @@ contract testAdapter is
         _grantRole(DEFAULT_ADMIN_ROLE, _multiSigWallet);
         _grantRole(UPGRADER_ROLE, _multiSigWallet);
         _grantRole(HANDLER_ROLE, _handlerAddress);
-
+        
+        treasury = _treasury;
         liquidity_handler = _handlerAddress;
         staking_token = _staking_token;
         reward_token = _reward_token;
@@ -72,10 +74,10 @@ contract testAdapter is
         claimReward();
     }
 
-    function withdraw(address _user, address _token, uint256 _amount) external onlyRole(HANDLER_ROLE)
+
+    function withdraw(address _user, address _token, uint256 _full_amout, uint256 _deducted_amount, uint256 _fees) external onlyRole(HANDLER_ROLE)
     {
-        claimReward();
-        IERC20Upgradeable(_token).safeTransfer(_user, _amount);
+        IERC20Upgradeable(_token).safeTransfer(_user, _deducted_amount);
     }
 
     function getAdapterAmount() external view returns (uint256) 

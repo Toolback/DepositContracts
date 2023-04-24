@@ -68,7 +68,6 @@ contract LiquidityHandler is
         __UUPSUpgradeable_init();
 
         // require(_multiSigWallet.isContract(), "Handler: Not contract");
-        // require(_exchangeAddress.isContract(), "Handler: Not contract");
         _grantRole(DEFAULT_ADMIN_ROLE, _multiSigWallet);
         _grantRole(UPGRADER_ROLE, _multiSigWallet);
     }
@@ -95,17 +94,21 @@ contract LiquidityHandler is
     /** @notice Called by Deposit Pools, withdraws deposited user assets.
      ** @param _user Address of depositor
      ** @param _token Address of token (USDC, DAI, USDT...)
-     ** @param _amount Amount
+     ** @param _full_amout amount of the token being removed
+     ** @param _deducted_amount amount of the token - fees
+     ** @param _fees fees amount (0.1%)
      */
     function withdraw(
-        address _user,
-        address _token,
-        uint256 _amount
+        address _user, 
+        address _token, 
+        uint256 _full_amout, 
+        uint256 _deducted_amount, 
+        uint256 _fees
     ) external whenNotPaused onlyPool(msg.sender) {
         // IERC20Upgradeable(_token).safeTransfer(_user, _amount);
         uint256 adapterId = PoolToAdapterId.get(msg.sender);
         address adapter = adapterIdsToAdapterInfo[adapterId].adapterAddress;
-        IAdapter(adapter).withdraw(_user, _token, _amount);
+        IAdapter(adapter).withdraw(_user, _token, _full_amout, _deducted_amount, _fees);
     }
 
     function getAdapterId(address _pool) external view returns (uint256) {
@@ -148,6 +151,15 @@ contract LiquidityHandler is
             }
         }
         return counter;
+    }
+
+    function getAdapterInfoByAddress(address _vault)
+        external
+        view
+        returns (AdapterInfo memory data_)
+    {
+        uint256 adapterId = PoolToAdapterId.get(_vault);
+        data_ = adapterIdsToAdapterInfo[adapterId];
     }
 
     function getAdapterInfo(uint256 _adapterId)
