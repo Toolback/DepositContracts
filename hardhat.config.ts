@@ -62,13 +62,13 @@ const config: HardhatUserConfig = {
       //   mnemonic: process.env.MNEMONIC,
       // },
     },
-    mumbai: {
-      url: process.env.MUMBAI_URL,
-      accounts: [process.env.PRIVATE_KEY as string],
-      // accounts: {
-      //   mnemonic: process.env.MNEMONIC,
-      // },
-    },
+    // mumbai: {
+    //   url: process.env.MUMBAI_URL,
+    //   accounts: [process.env.PRIVATE_KEY as string],
+    //   // accounts: {
+    //   //   mnemonic: process.env.MNEMONIC,
+    //   // },
+    // },
   },
 
   gasReporter: {
