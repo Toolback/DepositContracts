@@ -149,22 +149,22 @@ contract MlpAdapter is
      * @notice  function for transfer rewards to protocol treasury
      * @param _amount amount of the token being removed
      */
-    function transferAdapterFTM(uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE)
+    function transferAdapterRewards(uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE)
     {
         payable(treasury).transfer(_amount);
     }
 
-    /**
-     * @notice  admin function for removing blocked funds from contract
-     * @param _address address of the token being removed
-     * @param _to address of the recipient
-     * @param _amount amount of the token being removed
-     */
-    function removeTokenByAddress(address _address, address _to, uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE) 
-    {
-        IERC20Upgradeable(_address).safeTransfer(_to, _amount);
-        emit removeToken(_to, _address, _amount);
-    }
+    // /**
+    //  * @notice  admin function for removing blocked funds from contract
+    //  * @param _address address of the token being removed
+    //  * @param _to address of the recipient
+    //  * @param _amount amount of the token being removed
+    //  */
+    // function removeTokenByAddress(address _address, address _to, uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE) 
+    // {
+    //     IERC20Upgradeable(_address).safeTransfer(_to, _amount);
+    //     emit removeToken(_to, _address, _amount);
+    // }
 
     /* ------------------------------ Total Rewards ------------------------------ */
 

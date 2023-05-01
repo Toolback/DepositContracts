@@ -12,29 +12,17 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 import "hardhat/console.sol";
 
-//v1
-//0x5e689d7fb26ffc4bd615c98c8517a18ef1f5e68d
-//0x5E689D7fB26FfC4BD615c98C8517A18ef1f5e68d
+//v1 0x5e689d7fb26ffc4bd615c98c8517a18ef1f5e68d
+//v2 0x48afe4b50aadbc09d0bceb796d9e956ea90f15b4
 // approval for staking lp(vAMM) is made to this contract
 interface IGauge {
-    function rewards() external returns (address[] memory);
     function tokenIds(address tokenAddress) external returns (uint);
     function getReward() external;
-    function earned(address token, address account) external view returns (uint);
-    function depositAll(uint tokenId) external;
+    function depositAll() external;
     function deposit(uint amount) external;
     function withdrawAll() external;
     function withdraw(uint amount) external;
-    function withdrawToken(uint amount, uint tokenId) external;
     function balanceOf(address account) external view returns (uint256);
-}
-
-// V2 vAMM USDC / WFTM 0x48afe4b50aadbc09d0bceb796d9e956ea90f15b4
-interface IPair {
-        /// @dev claim accumulated but unclaimed fees (viewable via claimable0 and claimable1)
-        function claimFees() external returns (uint claimed0, uint claimed1);
-        function transfer(address dst, uint amount) external returns (bool);
-
 }
 
 contract EqzAdapter is
@@ -57,20 +45,12 @@ contract EqzAdapter is
     address public treasury;
 
     address public eqzGauge_address;
-    uint256 public gauge_tokenId;
-
 
     // bool public compoundRewardStatus;
 
     event removeToken(address indexed user, address indexed token, uint256 amount);
     event newTreasury(address new_treasury);
     event newLiquidityHandler(address new_handler);
-
-
-    // modifier compoundReward() {
-
-    //     _;
-    // }
 
     function initialize(
         address _treasury,
@@ -93,9 +73,7 @@ contract EqzAdapter is
         stacking_token = _stacking_token; // vAMM-USDC/WFTM 
         eqzGauge_address = 0x48afe4b50AADbC09D0bCEb796D9E956eA90F15b4; //vAMM-USDC/WFTM gauge contract;
         equal_token = 0x3Fd3A0c85B70754eFc07aC9Ac0cbBDCe664865A6;
-        // gauge_tokenId = IGauge(_eqzGauge_address).tokenIds(_stacking_token);
-        IERC20Upgradeable(_stacking_token).approve(eqzGauge_address, type(uint).max);
-        
+        // IERC20Upgradeable(_stacking_token).approve(eqzGauge_address, type(uint).max);
     }
 
     /**
@@ -107,6 +85,7 @@ contract EqzAdapter is
     function deposit(address _token, uint256 _amount) external onlyRole(HANDLER_ROLE)
     {
         IGauge gauge = IGauge(eqzGauge_address);
+        IERC20Upgradeable(stacking_token).approve(eqzGauge_address, _amount);
         gauge.deposit(_amount);
         return;
     }
@@ -127,11 +106,6 @@ contract EqzAdapter is
         IERC20Upgradeable(_token).safeTransfer(treasury, _fees);
     }
 
-    function getEqzTokenId() public returns (uint){
-        IGauge gauge = IGauge(eqzGauge_address);
-        return gauge.tokenIds(stacking_token);
-    }
-
     // /**
     //  * @notice /!\ WIP frontend metrics display 
     //  */
@@ -150,34 +124,29 @@ contract EqzAdapter is
     /* ========== ADMIN CONFIGURATION ========== */
 
     /**
-     * @notice  function for transfer reward base token (ftm) to protocol treasury
+     * @notice  function for transfer base token (ftm) to protocol treasury
      * @param _amount amount of the token being removed
      */
-    function transferAdapterFTM(uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE)
+    function transferAdapterRewards(uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE)
     {
+        uint256 rewardBal = IERC20Upgradeable(equal_token).balanceOf(address(this));
         payable(treasury).transfer(_amount);
+        IERC20Upgradeable(equal_token).safeTransfer(treasury, rewardBal);
     }
-
-    /**
-     * @notice  admin function for removing blocked funds from contract
-     * @param _address address of the token being removed
-     * @param _to address of the recipient
-     * @param _amount amount of the token being removed
-     */
-    function removeTokenByAddress(address _address, address _to, uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE) 
-    {
-        IERC20Upgradeable(_address).safeTransfer(_to, _amount);
-        emit removeToken(_to, _address, _amount);
-    }
-
-    /* ------------------------------ Total Rewards ------------------------------ */
 
     // /**
-    //  * @notice  manual Reward Compound for optimal rate
+    //  * @notice  admin function for removing blocked funds from contract
+    //  * @param _address address of the token being removed
+    //  * @param _to address of the recipient
+    //  * @param _amount amount of the token being removed
     //  */
-    // function manualCompound() external {
-    //     return;
+    // function removeTokenByAddress(address _address, address _to, uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE) 
+    // {
+    //     IERC20Upgradeable(_address).safeTransfer(_to, _amount);
+    //     emit removeToken(_to, _address, _amount);
     // }
+
+    /* ------------------------------ Total Rewards ------------------------------ */
 
     /**
      * @notice  function for claiming staking rewards on equalizer
@@ -185,18 +154,8 @@ contract EqzAdapter is
     function claimReward() external onlyRole(DEFAULT_ADMIN_ROLE)
     {
         IGauge gauge = IGauge(eqzGauge_address);
-        // gauge.getReward(address(this), gauge.rewards());
         gauge.getReward();
     }
-
-    /* ------------------------------ MLP Vault (vMLP) ------------------------------ */
-    
-    function depositMLPVault(uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE)
-    {
-        // IVester vester = IVester(MLPVester_address);
-        // vester.deposit(_amount);
-    }
-
 
     /* -------------------------------------------------------------------------- */
 
@@ -205,10 +164,10 @@ contract EqzAdapter is
         return;
     }
 
-    function setCompoundRewardStatus(bool _status) external onlyRole(DEFAULT_ADMIN_ROLE)
-    {
-        // compoundRewardStatus = _status;
-    }
+    // function setCompoundRewardStatus(bool _status) external onlyRole(DEFAULT_ADMIN_ROLE)
+    // {
+    //     // compoundRewardStatus = _status;
+    // }
 
     function setNewTreasury(address _newWallet) external onlyRole(DEFAULT_ADMIN_ROLE)
     {
@@ -229,11 +188,6 @@ contract EqzAdapter is
     {
         require(_newAddress.isContract(), "EQZ Adapter : Gauge Address Not contract");
         eqzGauge_address = _newAddress;
-    }
-
-    function setNewGaugeTokenId() external onlyRole(DEFAULT_ADMIN_ROLE)
-    {
-        gauge_tokenId = IGauge(eqzGauge_address).tokenIds(stacking_token);
     }
 
     function changeUpgradeStatus(bool _status) external onlyRole(DEFAULT_ADMIN_ROLE)

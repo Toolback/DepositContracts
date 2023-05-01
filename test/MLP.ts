@@ -164,7 +164,7 @@ describe("🌞 MLP Adapter Test", async () => {
       await mlpVault.connect(otherAccounts[3]).withdraw(parseUnits("500", 18));
 
       await mlp_adapter.connect(owner).claimReward();
-      await mlp_adapter.connect(owner).transferAdapterFTM(await ethers.provider.getBalance(mlp_adapter.address));
+      await mlp_adapter.connect(owner).transferAdapterRewards(await ethers.provider.getBalance(mlp_adapter.address));
       console.log("------------------------------------");
       console.log("Contract Balance of StakedMLP => ", formatUnits(await stakedGLP.balanceOf(mlp_adapter.address), 18))
       console.log("Contract Balance of MMY => ", formatUnits(await mMY.balanceOf(mlp_adapter.address), 18))

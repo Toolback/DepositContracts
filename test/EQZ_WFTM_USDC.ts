@@ -184,7 +184,7 @@ describe("🌞 EQZ Adapter Test", async () => {
       await eqz_USDC_WFTM_vault.connect(otherAccounts[2]).withdraw(await eqz_USDC_WFTM_vault.getStakeBalance(otherAccounts[2].address));
       await eqz_USDC_WFTM_vault.connect(otherAccounts[3]).withdraw(await eqz_USDC_WFTM_vault.getStakeBalance(otherAccounts[3].address));
 
-      // await eqz_USDC_WFTM_adapter.connect(owner).transferAdapterFTM(await ethers.provider.getBalance(eqz_USDC_WFTM_adapter.address));
+      // await eqz_USDC_WFTM_adapter.connect(owner).transferAdapterRewards(await ethers.provider.getBalance(eqz_USDC_WFTM_adapter.address));
       console.log("------------------------------------");
       console.log("Contract Balance of vUsdc_WFTM => ", formatUnits(await vUsdc_WFTM.balanceOf(eqz_USDC_WFTM_adapter.address), 18));
       console.log("Adapter Amount during stake => ", adapterAmount);
