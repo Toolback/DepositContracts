@@ -897,6 +897,46 @@
       "kind": "uups"
     },
     {
+      "address": "0xF8e31cb472bc70500f08Cd84917E5A1912Ec8397",
+      "txHash": "0xc82b5727f67eec5b2c62d3928a98b23f91dddaec86f8e597bdd10d48d9d26966",
+      "kind": "uups"
+    },
+    {
+      "address": "0xc0F115A19107322cFBf1cDBC7ea011C19EbDB4F8",
+      "txHash": "0xd38d51c91a8be5c493f349a3010cfe3de312103612fd77465a987d411bd558a6",
+      "kind": "uups"
+    },
+    {
+      "address": "0xc96304e3c037f81dA488ed9dEa1D8F2a48278a75",
+      "txHash": "0xf340976d6b85109054361ef7dedd1990609406d7991f3fcfa0789a9d7463b644",
+      "kind": "uups"
+    },
+    {
+      "address": "0x34B40BA116d5Dec75548a9e9A8f15411461E8c70",
+      "txHash": "0xa0dbee632612d625a2edb073466408097869181cf0a01421ce63a625c54c1a37",
+      "kind": "uups"
+    },
+    {
+      "address": "0xD0141E899a65C95a556fE2B27e5982A6DE7fDD7A",
+      "txHash": "0x5e75a64f6841fcbd67f3a5b28803c4e74467b58ca72826920328f913a2929b4b",
+      "kind": "uups"
+    },
+    {
+      "address": "0x07882Ae1ecB7429a84f1D53048d35c4bB2056877",
+      "txHash": "0x7cc32093de21cfab4427c1f932ba91ad0ddf41ba5007d6f394aaded824639415",
+      "kind": "uups"
+    },
+    {
+      "address": "0x22753E4264FDDc6181dc7cce468904A80a363E44",
+      "txHash": "0xd7b029aa13ef8e6f4bf792b8884352abff998bc5b788eea3e2f0549cb2982ab9",
+      "kind": "uups"
+    },
+    {
+      "address": "0xA7c59f010700930003b33aB25a7a0679C860f29c",
+      "txHash": "0xf4bd0f82ea1fa0897bca67319539846d5387552b7f3944b0ccd8a11cd4034462",
+      "kind": "uups"
+    },
+    {
       "address": "0x4631BCAbD6dF18D94796344963cB60d44a4136b6",
       "txHash": "0xd2d17d4cf3d303e451d4db0800b254d4d596648c3dd050d5b3a5cfa13af7a2d2",
       "kind": "uups"
@@ -933,47 +973,7 @@
     },
     {
       "address": "0xD5ac451B0c50B9476107823Af206eD814a2e2580",
-      "txHash": "0x567d59e281d959ec5a42229a6273a16a6e8c6f4dd8e32f936332eb8b9aae0400",
-      "kind": "uups"
-    },
-    {
-      "address": "0xF8e31cb472bc70500f08Cd84917E5A1912Ec8397",
-      "txHash": "0x37d6e22f8b73f06a40bc307f2f630bd4b81bc32e84e5612a34b01ec93dab1736",
-      "kind": "uups"
-    },
-    {
-      "address": "0xc0F115A19107322cFBf1cDBC7ea011C19EbDB4F8",
-      "txHash": "0x74b7c8104f4c41086ce6831d3484cdc092b9f337e148a5379b187481fa4ecced",
-      "kind": "uups"
-    },
-    {
-      "address": "0xc96304e3c037f81dA488ed9dEa1D8F2a48278a75",
-      "txHash": "0x5cd41f081a6bfc3a6509e9e51e743684f8ccaf1b485c52c25fad46811e208411",
-      "kind": "uups"
-    },
-    {
-      "address": "0x34B40BA116d5Dec75548a9e9A8f15411461E8c70",
-      "txHash": "0x9a5c5b78ea0abe80367874c48c09fb556c2da6c141c36ec5602a259aa9703647",
-      "kind": "uups"
-    },
-    {
-      "address": "0xD0141E899a65C95a556fE2B27e5982A6DE7fDD7A",
-      "txHash": "0x50004f18bcc5b5038eeef38620a81efed035d43d3612fab356cc3a7af86a60fc",
-      "kind": "uups"
-    },
-    {
-      "address": "0x07882Ae1ecB7429a84f1D53048d35c4bB2056877",
-      "txHash": "0xb222adaeb0cd8dfdf49d5766ba2fc3cdfd47e14b641a0d33ed8393eefbc7a3d6",
-      "kind": "uups"
-    },
-    {
-      "address": "0x22753E4264FDDc6181dc7cce468904A80a363E44",
-      "txHash": "0x0108a5a98f24f229f4bcbc1d6631dcfc73fb0ae6df7e3fb33e39d6fb3363f8fe",
-      "kind": "uups"
-    },
-    {
-      "address": "0xA7c59f010700930003b33aB25a7a0679C860f29c",
-      "txHash": "0x886ad4f6a10118fad959b003887fc1eb09a35b336d4d79821f951c003acece88",
+      "txHash": "0x789edfbf2b67fc2d6eb92399a328b1361dd560b1228c5e06a0cc1a8dcfc8c3e4",
       "kind": "uups"
     }
   ],
@@ -4947,9 +4947,9 @@
         }
       }
     },
-    "b99880182107299d1ba914e66834b8610ffcee44f3943c4bc8be343874689da7": {
+    "bcef100877f55d9e943175c2bc5755ef5add520391133e27e7f7679a0e6ea236": {
       "address": "0xCace1b78160AE76398F486c8a18044da0d66d86D",
-      "txHash": "0xd6d5be69237f0fdaa59383275b4caea1624e0682e42ea242cb2fe739ce5e42ff",
+      "txHash": "0xb102f2940f3552bd535c98cf8823f7926a45d37de606426ab564179d0bb9db27",
       "layout": {
         "solcVersion": "0.8.11",
         "storage": [
@@ -5024,7 +5024,7 @@
             "slot": "251",
             "type": "t_bool",
             "contract": "EqzAdapter",
-            "src": "contracts/adapters/EqzAdapter.sol:51"
+            "src": "contracts/adapters/EqzAdapter.sol:52"
           },
           {
             "label": "liquidity_handler",
@@ -5032,7 +5032,7 @@
             "slot": "251",
             "type": "t_address",
             "contract": "EqzAdapter",
-            "src": "contracts/adapters/EqzAdapter.sol:53"
+            "src": "contracts/adapters/EqzAdapter.sol:54"
           },
           {
             "label": "stacking_token",
@@ -5040,18 +5040,18 @@
             "slot": "252",
             "type": "t_address",
             "contract": "EqzAdapter",
-            "src": "contracts/adapters/EqzAdapter.sol:54"
+            "src": "contracts/adapters/EqzAdapter.sol:55"
           },
           {
-            "label": "treasury",
+            "label": "equal_token",
             "offset": 0,
             "slot": "253",
             "type": "t_address",
             "contract": "EqzAdapter",
-            "src": "contracts/adapters/EqzAdapter.sol:55"
+            "src": "contracts/adapters/EqzAdapter.sol:56"
           },
           {
-            "label": "eqzGauge_address",
+            "label": "treasury",
             "offset": 0,
             "slot": "254",
             "type": "t_address",
@@ -5059,12 +5059,20 @@
             "src": "contracts/adapters/EqzAdapter.sol:57"
           },
           {
-            "label": "gauge_tokenId",
+            "label": "eqzGauge_address",
             "offset": 0,
             "slot": "255",
+            "type": "t_address",
+            "contract": "EqzAdapter",
+            "src": "contracts/adapters/EqzAdapter.sol:59"
+          },
+          {
+            "label": "gauge_tokenId",
+            "offset": 0,
+            "slot": "256",
             "type": "t_uint256",
             "contract": "EqzAdapter",
-            "src": "contracts/adapters/EqzAdapter.sol:58"
+            "src": "contracts/adapters/EqzAdapter.sol:60"
           }
         ],
         "types": {

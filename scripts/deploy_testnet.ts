@@ -80,7 +80,7 @@ async function deploy_testnet() {
 
   let eqzAdapter = await upgrades.deployProxy(EQZAdapter,
     // treasury , handler , staking token, admin, gauge (EQZ contract) address
-    [gnosis, handler.address, testtoken2.address, gnosis, "0x48afe4b50aadbc09d0bceb796d9e956ea90f15b4"],
+    [gnosis, handler.address, testtoken2.address, gnosis],
     { initializer: 'initialize', kind: 'uups' }
   );
   console.log("EQZ Adapter deployed to:", eqzAdapter.address);

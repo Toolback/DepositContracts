@@ -75,7 +75,7 @@ async function deploy_hardhat(owner: any, stakingToken: any, ) {
 
 	let eqz_USDC_WFTM_adapter = await upgrades.deployProxy(EQZAdapter,
 		// reward_router address (mummy contract)/ handler / staking token / admin / EQZ Gauge
-		[owner.address, handler.address, stakingToken.address, owner.address, "0x48afe4b50aadbc09d0bceb796d9e956ea90f15b4"],
+		[owner.address, handler.address, stakingToken.address, owner.address],
 		{ initializer: 'initialize', kind: 'uups' }
 	);
 
@@ -86,7 +86,7 @@ async function deploy_hardhat(owner: any, stakingToken: any, ) {
 	// await handler.grantRole(handler.DEFAULT_ADMIN_ROLE(), pool_usdc.address);
 
 	const adapterId2 = 2;
-	await handler.connect(owner).setPoolToAdapterId(eqz_USDC_WFTM_vault.address, adapterId);
+	await handler.connect(owner).setPoolToAdapterId(eqz_USDC_WFTM_vault.address, adapterId2);
 	await handler.connect(owner).setAdapter(adapterId2, "Eqz - USDC/WFTM Strategy", 0, eqz_USDC_WFTM_adapter.address, true);
 	// await handler.grantRole(handler.DEFAULT_ADMIN_ROLE(), pool_usdc.address);
 

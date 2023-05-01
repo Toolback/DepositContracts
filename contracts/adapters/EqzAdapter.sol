@@ -26,6 +26,7 @@ interface IGauge {
     function withdrawAll() external;
     function withdraw(uint amount) external;
     function withdrawToken(uint amount, uint tokenId) external;
+    function balanceOf(address account) external view returns (uint256);
 }
 
 // V2 vAMM USDC / WFTM 0x48afe4b50aadbc09d0bceb796d9e956ea90f15b4
@@ -52,6 +53,7 @@ contract EqzAdapter is
 
     address public liquidity_handler;
     address public stacking_token; //  vAMM-USDC/WFTM  => 0x7547d05dFf1DA6B4A2eBB3f0833aFE3C62ABD9a1
+    address public equal_token;
     address public treasury;
 
     address public eqzGauge_address;
@@ -74,8 +76,7 @@ contract EqzAdapter is
         address _treasury,
         address _handlerAddress,
         address _stacking_token,
-        address _multiSigWallet,
-        address _eqzGauge_address
+        address _multiSigWallet
     ) initializer public {
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -89,11 +90,11 @@ contract EqzAdapter is
         
         treasury = _treasury;
         liquidity_handler = _handlerAddress;
-        stacking_token = _stacking_token; // ex : vAMM-USDC/WFTM 
-        eqzGauge_address = _eqzGauge_address; // 0x5E689D7fB26FfC4BD615c98C8517A18ef1f5e68d;
-  
+        stacking_token = _stacking_token; // vAMM-USDC/WFTM 
+        eqzGauge_address = 0x48afe4b50AADbC09D0bCEb796D9E956eA90F15b4; //vAMM-USDC/WFTM gauge contract;
+        equal_token = 0x3Fd3A0c85B70754eFc07aC9Ac0cbBDCe664865A6;
         // gauge_tokenId = IGauge(_eqzGauge_address).tokenIds(_stacking_token);
-        // IERC20Upgradeable(_stacking_token).approve(_eqzGauge_address, type(uint).max);
+        IERC20Upgradeable(_stacking_token).approve(eqzGauge_address, type(uint).max);
         
     }
 
@@ -134,15 +135,17 @@ contract EqzAdapter is
     // /**
     //  * @notice /!\ WIP frontend metrics display 
     //  */
-    // function getAdapterAmount() external returns (uint256[] memory) 
-    // {
-    //     uint256[] memory amounts = new uint256[](4);
-    //     amounts[0] = address(this).balance;
-    //     amounts[1] = IERC20Upgradeable(stacking_token).balanceOf(address(this));
-    //     // amounts[2] = esMMY.balanceOf(address(this));
-    //     // amounts[3] = esMMY.stakedBalance(address(this));
-    //     return amounts;
-    // }
+    function getAdapterAmount() external view returns (uint256[] memory) 
+    {
+        IGauge gauge = IGauge(eqzGauge_address);
+
+        uint256[] memory amounts = new uint256[](4);
+        amounts[0] = address(this).balance;
+        amounts[1] = IERC20Upgradeable(stacking_token).balanceOf(address(this));
+        amounts[2] = gauge.balanceOf(address(this));
+        amounts[3] = IERC20Upgradeable(equal_token).balanceOf(address(this));
+        return amounts;
+    }
 
     /* ========== ADMIN CONFIGURATION ========== */
 

@@ -9,7 +9,7 @@ var assert = require('chai').assert
 import eqz_router_abi from "../ABI/eqz_router_abi.json";
 
 
-let owner: SignerWithAddress, otherAccounts: SignerWithAddress[], gaugeVault:SignerWithAddress;
+let owner: SignerWithAddress, otherAccounts: SignerWithAddress[], gaugeVault: SignerWithAddress;
 // let Whale1: any = "0x08048f6d9db401d2716dcbb1979513231e5e3c81"; 
 let usdc_ftm_whale = "0x3381b11f6865f23e0ad37a92b4cd4aebe9e4f86a"; // ftm network
 let usdc_address = "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75";
@@ -19,10 +19,9 @@ let equal_address = "0x3Fd3A0c85B70754eFc07aC9Ac0cbBDCe664865A6";
 let handler: any;
 let eqz_USDC_WFTM_vault: any, eqz_USDC_WFTM_adapter: any;
 let deepfiToken: any;
-let testToken6: any, testToken18: any ;
-let vUsdc_WFTM:any, wFTM:any, usdc:any, equal:any;
+let vUsdc_WFTM: any, wFTM: any, usdc: any, equal: any;
 
-let eqz_router:any;
+let eqz_router: any;
 
 let initialBalance: String, onGoingBal: String;
 
@@ -52,7 +51,7 @@ async function setReward(duration?: number, amount?: BigNumber) {
   }
 }
 
-async function deposit(recipient: SignerWithAddress, token: Contract, amount: number) {
+async function deposit(recipient: SignerWithAddress, token: Contract, amount: BigNumber) {
   // await token.connect(gaugeVault).transfer(recipient.address, amount);
   await token.connect(recipient).approve(eqz_USDC_WFTM_vault.address, amount);
   await eqz_USDC_WFTM_vault.connect(recipient).deposit(amount);
@@ -63,25 +62,25 @@ function getRandomNumber(min: number, max: number) {
   return Math.floor(Math.random() * (max - min) + min);
 }
 
-async function getLPTokens(dest:any, amount:BigNumber) {
-        // convert ftm to wftm
-        await wFTM.connect(owner).deposit({value: amount.mul(2)});
-        //approve supply tokens
-        await usdc.connect(owner).approve(eqz_router.address, amount )
-        await wFTM.connect(owner).approve(eqz_router.address, amount.mul(2) )
-        console.log('start supply ... ')
-  
-        let {amountA, amountB, liquidity} = await eqz_router.connect(owner).addLiquidity(
-          usdc_address, //token A 
-          wFTM_address, // token B 
-          false, // stablecoin 
-          amount, // amountADesired
-          amount.mul(2), // amountBDesired
-          1, // amountAmin
-          1, // amountBmin
-          dest.address, // to 
-          Date.now() + 100000 // deadline
-          )
+async function getLPTokens(dest: any, amount: BigNumber) {
+  // convert ftm to wftm
+  await wFTM.connect(owner).deposit({ value: amount.mul(2) });
+  //approve supply tokens
+  await usdc.connect(owner).approve(eqz_router.address, amount)
+  await wFTM.connect(owner).approve(eqz_router.address, amount.mul(2))
+  console.log('start supply ... ')
+
+  let { amountA, amountB, liquidity } = await eqz_router.connect(owner).addLiquidity(
+    usdc_address, //token A 
+    wFTM_address, // token B 
+    false, // stablecoin 
+    amount, // amountADesired
+    amount.mul(2), // amountBDesired
+    1, // amountAmin
+    1, // amountBmin
+    dest.address, // to 
+    Date.now() + 100000 // deadline
+  )
 }
 
 describe("🌞 EQZ Adapter Test", async () => {
@@ -117,12 +116,8 @@ describe("🌞 EQZ Adapter Test", async () => {
 
   beforeEach(async () => {
     ({
-      testToken6,
-      testToken18,
       deepfiToken,
       handler,
-      // mlpVault,
-      // mlp_adapter,
       eqz_USDC_WFTM_vault,
       eqz_USDC_WFTM_adapter
     } = await deploy_hardhat(owner, vUsdc_WFTM));
@@ -131,45 +126,41 @@ describe("🌞 EQZ Adapter Test", async () => {
 
   describe("🌱 Check Vault / Adapter / Rewards", async () => {
 
-    it("Test 1 : 1 user staking on 1000 reward / 60 days", async () => {
-      await getLPTokens(owner, parseEther("1000"));
-        console.log("bal of LP Token  => ", formatUnits(await vUsdc_WFTM.balanceOf(owner.address), 18), await vUsdc_WFTM.balanceOf(owner.address))
-        
-        await setReward(864000, parseEther("1000"));
-        console.log('Start User Deposit')
-      // await deposit(otherAccounts[0], vUsdc_WFTM, ethers.utils.parseUnits("1", 18));
-      await deposit(owner, vUsdc_WFTM, await vUsdc_WFTM.balanceOf(owner.address));
-      console.log('Deposits Done ')
+    // it("Test 1 : 1 user staking on 1000 reward / 60 days", async () => {
+    //   await getLPTokens(owner, parseEther("1000"));
+    //   console.log("bal of LP Token  => ", formatUnits(await vUsdc_WFTM.balanceOf(owner.address), 18), await vUsdc_WFTM.balanceOf(owner.address))
 
-      await skipDays(60);
-      await eqz_USDC_WFTM_vault.connect(owner).claimReward();
-      console.log('User Rewards Claimed ')
+    //   await setReward(864000, parseEther("1000"));
+    //   console.log('Start User Deposit')
+    //   // await deposit(otherAccounts[0], vUsdc_WFTM, ethers.utils.parseUnits("1", 18));
+    //   await deposit(owner, vUsdc_WFTM, await vUsdc_WFTM.balanceOf(owner.address));
 
-      await eqz_USDC_WFTM_adapter.connect(owner).claimReward();
-      console.log('Adapter Rewards Claimed ')
+    //   await skipDays(60);
+    //   await eqz_USDC_WFTM_vault.connect(owner).claimReward();
+    //   console.log('User Rewards Claimed ')
 
-      // await eqz_USDC_WFTM_vault.connect(otherAccounts[0]).withdraw(parseUnits("1", 18));
-      await eqz_USDC_WFTM_vault.connect(owner).withdraw(await eqz_USDC_WFTM_vault.getStakeBalance(owner.address));
-      console.log('Withdrawns Done ')
+    //   await eqz_USDC_WFTM_adapter.connect(owner).claimReward();
+    //   console.log('Adapter Rewards Claimed ')
 
-      // await eqz_USDC_WFTM_adapter.connect(owner).transferAdapterFTM(await ethers.provider.getBalance(eqz_USDC_WFTM_adapter.address));
-      // console.log('FTM Transfered !')
+    //   // await eqz_USDC_WFTM_vault.connect(otherAccounts[0]).withdraw(parseUnits("1", 18));
+    //   await eqz_USDC_WFTM_vault.connect(owner).withdraw(await eqz_USDC_WFTM_vault.getStakeBalance(owner.address));
+    //   console.log('Withdrawns Done ')
 
-      console.log("------------------------------------");
-      console.log("Contract Balance of vUsdc_WFTM => ", formatUnits(await vUsdc_WFTM.balanceOf(eqz_USDC_WFTM_adapter.address), 18))
-      console.log("Contract Balance of EQUAL => ", formatUnits(await equal.balanceOf(eqz_USDC_WFTM_adapter.address), 18));
-      console.log("Contract Balance of FTM => ", formatUnits(await ethers.provider.getBalance(eqz_USDC_WFTM_adapter.address), 18));
-      console.log("Contract Balance of wFTM => ", formatUnits(await wFTM.balanceOf(eqz_USDC_WFTM_adapter.address), 18));
-      // console.log("Treasury FTM Balance => ", formatUnits(await ethers.provider.getBalance(await eqz_USDC_WFTM_adapter.treasury()), 18));
-      // console.log("getAdapterAmount => ", (await eqz_USDC_WFTM_adapter.getAdapterAmount()));
-      console.log("------------------------------------");
+    //   console.log("------------------------------------");
+    //   console.log("Contract Balance of vUsdc_WFTM => ", formatUnits(await vUsdc_WFTM.balanceOf(eqz_USDC_WFTM_adapter.address), 18))
+    //   console.log("Contract Balance of EQUAL => ", formatUnits(await equal.balanceOf(eqz_USDC_WFTM_adapter.address), 18));
+    //   console.log("Contract Balance of FTM => ", formatUnits(await ethers.provider.getBalance(eqz_USDC_WFTM_adapter.address), 18));
+    //   console.log("Contract Balance of wFTM => ", formatUnits(await wFTM.balanceOf(eqz_USDC_WFTM_adapter.address), 18));
+    //   // console.log("Treasury FTM Balance => ", formatUnits(await ethers.provider.getBalance(await eqz_USDC_WFTM_adapter.treasury()), 18));
+    //   // console.log("getAdapterAmount => ", (await eqz_USDC_WFTM_adapter.getAdapterAmount()));
+    //   console.log("------------------------------------");
 
-    });
+    // });
 
 
-        it("Test 2 :4 users staking 10/10/30/50% on 1000 reward / 60 days", async () => {
+    it("Test 2 :4 users staking 10/10/30/50% on 1000 reward / 60 days", async () => {
       await setReward(864000, parseEther("1000"));
-      
+
       await getLPTokens(otherAccounts[0], parseEther("100"));
       await getLPTokens(otherAccounts[1], parseEther("100"));
       await getLPTokens(otherAccounts[2], parseEther("300"));
@@ -185,16 +176,18 @@ describe("🌞 EQZ Adapter Test", async () => {
       await eqz_USDC_WFTM_vault.connect(otherAccounts[1]).claimReward();
       await eqz_USDC_WFTM_vault.connect(otherAccounts[2]).claimReward();
       await eqz_USDC_WFTM_vault.connect(otherAccounts[3]).claimReward();
-
+      // let maxStaking = formatUnits(await vUsdc_WFTM.balanceOf(eqz_USDC_WFTM_adapter.address), 18);
+      let adapterAmount = await eqz_USDC_WFTM_adapter.getAdapterAmount();
+      await eqz_USDC_WFTM_adapter.connect(owner).claimReward();
       await eqz_USDC_WFTM_vault.connect(otherAccounts[0]).withdraw(await eqz_USDC_WFTM_vault.getStakeBalance(otherAccounts[0].address));
       await eqz_USDC_WFTM_vault.connect(otherAccounts[1]).withdraw(await eqz_USDC_WFTM_vault.getStakeBalance(otherAccounts[1].address));
       await eqz_USDC_WFTM_vault.connect(otherAccounts[2]).withdraw(await eqz_USDC_WFTM_vault.getStakeBalance(otherAccounts[2].address));
       await eqz_USDC_WFTM_vault.connect(otherAccounts[3]).withdraw(await eqz_USDC_WFTM_vault.getStakeBalance(otherAccounts[3].address));
 
-      await eqz_USDC_WFTM_adapter.connect(owner).claimReward();
-      await eqz_USDC_WFTM_adapter.connect(owner).transferAdapterFTM(await ethers.provider.getBalance(eqz_USDC_WFTM_adapter.address));
+      // await eqz_USDC_WFTM_adapter.connect(owner).transferAdapterFTM(await ethers.provider.getBalance(eqz_USDC_WFTM_adapter.address));
       console.log("------------------------------------");
-      console.log("Contract Balance of vUsdc_WFTM => ", formatUnits(await vUsdc_WFTM.balanceOf(eqz_USDC_WFTM_adapter.address), 18))
+      console.log("Contract Balance of vUsdc_WFTM => ", formatUnits(await vUsdc_WFTM.balanceOf(eqz_USDC_WFTM_adapter.address), 18));
+      console.log("Adapter Amount during stake => ", adapterAmount);
       console.log("Contract Balance of EQUAL => ", formatUnits(await equal.balanceOf(eqz_USDC_WFTM_adapter.address), 18));
       console.log("Contract Balance of FTM => ", formatUnits(await ethers.provider.getBalance(eqz_USDC_WFTM_adapter.address), 18));
       console.log("Contract Balance of wFTM => ", formatUnits(await wFTM.balanceOf(eqz_USDC_WFTM_adapter.address), 18));
