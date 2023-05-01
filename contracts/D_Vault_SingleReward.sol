@@ -113,10 +113,10 @@ contract D_Vault_SingleReward is
     */
     modifier updateReward(address _account) {
         rewardPerTokenStored = rewardPerToken();
-        updatedAt = lastTimeRewardApplicable();
+        updatedAt = _lastTimeRewardApplicable();
 
         if (_account != address(0)) {
-            rewards[_account] = getRewardBalance(_account);
+            rewards[_account] = _getRewardBalance(_account);
             userRewardPerTokenPaid[_account] = rewardPerTokenStored;
         }
         
@@ -176,7 +176,7 @@ contract D_Vault_SingleReward is
         }
     }
 
-    function lastTimeRewardApplicable() internal view returns (uint) {
+    function _lastTimeRewardApplicable() internal view returns (uint) {
         return _min(finishAt, block.timestamp);
     }
 
@@ -185,14 +185,14 @@ contract D_Vault_SingleReward is
             return rewardPerTokenStored;
         }
 
-        uint256 rewardDuration = lastTimeRewardApplicable() - updatedAt;
+        uint256 rewardDuration = _lastTimeRewardApplicable() - updatedAt;
         uint256 rewardRatePerToken = rewardRate * rewardDuration * 1e18 / totalSupply;
         return rewardPerTokenStored + rewardRatePerToken;
     }
     /**
     * @notice  Retrieve user actual claimable balance.
     */
-    function getRewardBalance(address _account) internal view returns (uint256) {
+    function _getRewardBalance(address _account) internal view returns (uint256) {
         uint256 earnedReward = rewards[_account];
         uint256 accountRewardPerTokenPaid = userRewardPerTokenPaid[_account];
         uint256 rewardPerTokenDiff = rewardPerToken() - accountRewardPerTokenPaid;
@@ -203,7 +203,7 @@ contract D_Vault_SingleReward is
     //should be same index as total earned 
     function getUserAllClaimableRewards(address _account) external view returns (uint256[] memory){
         uint256[] memory balances = new uint256[](1);
-        balances[0] = getRewardBalance(_account);
+        balances[0] = _getRewardBalance(_account);
         return balances;
     }
 
@@ -215,10 +215,14 @@ contract D_Vault_SingleReward is
 
     function getUserBals(address _account) external view returns (UserBals memory bals_)
     {
+        uint256[] memory usrClaimable = new uint256[](1);
+        uint256[] memory  usrTotalEarned = new uint256[](1);
+        usrClaimable[0] = _getRewardBalance(_account);
+        usrTotalEarned[0] = totalClaimed[_account];
+        
         bals_.userDeposit = balanceOf[_account];
-        bals_.userClaimable[0] = getRewardBalance(_account);
-        bals_.userTotalEarned[0] = totalClaimed[_account];
-
+        bals_.userClaimable = usrClaimable;
+        bals_.userTotalEarned = usrTotalEarned;
     }
     /**
     * @notice  return _account staked assets amount
@@ -236,6 +240,9 @@ contract D_Vault_SingleReward is
 
     function getVaultInfos() external view returns(VaultInfo memory info_)
     {
+        address[] memory rewardToken = new address[](1);
+        rewardToken[0] = address(rewardsToken);
+
         info_.name = vaultName;
         info_.totalSupply = totalSupply;
         info_.duration = duration;
@@ -244,7 +251,7 @@ contract D_Vault_SingleReward is
         info_.rewardRate = rewardRate;
         info_.rewardPerTokenStored = rewardPerTokenStored;
         info_.stakingToken = address(stakingToken);
-        info_.rewardsToken[0] = address(rewardsToken);
+        info_.rewardsToken = rewardToken;
     }
 
     function _min(uint x, uint y) private pure returns (uint) {
@@ -265,9 +272,10 @@ contract D_Vault_SingleReward is
 
     /**
      * @dev Update the reward rate. Only callable by the contract owner.
-     * @param _amount The new reward amount per second
+     * @param _amount The new reward amount to distribute
      */
     function notifyRewardAmount(uint _amount) external onlyRole(DEFAULT_ADMIN_ROLE) updateReward(address(0)) {
+        rewardsToken.safeTransferFrom(msg.sender, address(this), _amount);
         if (block.timestamp >= finishAt) {
             rewardRate = _amount / duration;
         } else {

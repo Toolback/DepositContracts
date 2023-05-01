@@ -12,19 +12,28 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 import "hardhat/console.sol";
 
+//v1
 //0x5e689d7fb26ffc4bd615c98c8517a18ef1f5e68d
 //0x5E689D7fB26FfC4BD615c98C8517A18ef1f5e68d
 // approval for staking lp(vAMM) is made to this contract
 interface IGauge {
     function rewards() external returns (address[] memory);
     function tokenIds(address tokenAddress) external returns (uint);
-    function getReward(address account, address[] memory tokens) external;
+    function getReward() external;
     function earned(address token, address account) external view returns (uint);
     function depositAll(uint tokenId) external;
-    function deposit(uint amount, uint tokenId) external;
+    function deposit(uint amount) external;
     function withdrawAll() external;
     function withdraw(uint amount) external;
     function withdrawToken(uint amount, uint tokenId) external;
+}
+
+// V2 vAMM USDC / WFTM 0x48afe4b50aadbc09d0bceb796d9e956ea90f15b4
+interface IPair {
+        /// @dev claim accumulated but unclaimed fees (viewable via claimable0 and claimable1)
+        function claimFees() external returns (uint claimed0, uint claimed1);
+        function transfer(address dst, uint amount) external returns (bool);
+
 }
 
 contract EqzAdapter is
@@ -81,24 +90,23 @@ contract EqzAdapter is
         treasury = _treasury;
         liquidity_handler = _handlerAddress;
         stacking_token = _stacking_token; // ex : vAMM-USDC/WFTM 
-        // compoundRewardStatus = true;
         eqzGauge_address = _eqzGauge_address; // 0x5E689D7fB26FfC4BD615c98C8517A18ef1f5e68d;
   
         // gauge_tokenId = IGauge(_eqzGauge_address).tokenIds(_stacking_token);
-        // IERC20Upgradeable(_stacking_token).approve(_eqzGauge_address, type(uint256).max);
+        // IERC20Upgradeable(_stacking_token).approve(_eqzGauge_address, type(uint).max);
         
     }
 
     /**
      * @notice  function called by handler when vault deposit
-     * @dev only used for compound reward / adapter patern
+     * @dev only used for compound reward / adapter pattern
      * @param _token address of the token being removed
      * @param _amount amount of the token being removed
      */
     function deposit(address _token, uint256 _amount) external onlyRole(HANDLER_ROLE)
     {
         IGauge gauge = IGauge(eqzGauge_address);
-        gauge.deposit(_amount, gauge_tokenId);
+        gauge.deposit(_amount);
         return;
     }
 
@@ -113,7 +121,7 @@ contract EqzAdapter is
     function withdraw(address _user, address _token, uint256 _full_amout, uint256 _deducted_amount, uint256 _fees) external onlyRole(HANDLER_ROLE)
     {
         IGauge gauge = IGauge(eqzGauge_address);
-        gauge.withdrawToken(_full_amout, gauge_tokenId);
+        gauge.withdraw(_full_amout);
         IERC20Upgradeable(_token).safeTransfer(_user, _deducted_amount);
         IERC20Upgradeable(_token).safeTransfer(treasury, _fees);
     }
@@ -123,18 +131,18 @@ contract EqzAdapter is
         return gauge.tokenIds(stacking_token);
     }
 
-    /**
-     * @notice /!\ WIP frontend metrics display 
-     */
-    function getAdapterAmount() external returns (uint256[] memory) 
-    {
-        uint256[] memory amounts = new uint256[](4);
-        amounts[0] = address(this).balance;
-        amounts[1] = IERC20Upgradeable(stacking_token).balanceOf(address(this));
-        // amounts[2] = esMMY.balanceOf(address(this));
-        // amounts[3] = esMMY.stakedBalance(address(this));
-        return amounts;
-    }
+    // /**
+    //  * @notice /!\ WIP frontend metrics display 
+    //  */
+    // function getAdapterAmount() external returns (uint256[] memory) 
+    // {
+    //     uint256[] memory amounts = new uint256[](4);
+    //     amounts[0] = address(this).balance;
+    //     amounts[1] = IERC20Upgradeable(stacking_token).balanceOf(address(this));
+    //     // amounts[2] = esMMY.balanceOf(address(this));
+    //     // amounts[3] = esMMY.stakedBalance(address(this));
+    //     return amounts;
+    // }
 
     /* ========== ADMIN CONFIGURATION ========== */
 
@@ -169,12 +177,13 @@ contract EqzAdapter is
     // }
 
     /**
-     * @notice  function for claiming pending esMMY and FTM
+     * @notice  function for claiming staking rewards on equalizer
      */
     function claimReward() external onlyRole(DEFAULT_ADMIN_ROLE)
     {
         IGauge gauge = IGauge(eqzGauge_address);
-        gauge.getReward(address(this), gauge.rewards());
+        // gauge.getReward(address(this), gauge.rewards());
+        gauge.getReward();
     }
 
     /* ------------------------------ MLP Vault (vMLP) ------------------------------ */

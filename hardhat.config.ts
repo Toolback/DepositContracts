@@ -38,7 +38,7 @@ const config: HardhatUserConfig = {
       forking: {
         enabled: process.env.FORKING_ENABLED == "true",
         url: process.env.FORKING_URL as string,
-        blockNumber: 57393222,
+        blockNumber: 61133149, // 30/04/2023 - 13H00 On fantom network
       }
     },
     // fantom: {

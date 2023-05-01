@@ -80,7 +80,7 @@ async function deploy_testnet() {
 
   let eqzAdapter = await upgrades.deployProxy(EQZAdapter,
     // treasury , handler , staking token, admin, gauge (EQZ contract) address
-    [gnosis, handler.address, testtoken2.address, gnosis, "0x5E689D7fB26FfC4BD615c98C8517A18ef1f5e68d"],
+    [gnosis, handler.address, testtoken2.address, gnosis, "0x48afe4b50aadbc09d0bceb796d9e956ea90f15b4"],
     { initializer: 'initialize', kind: 'uups' }
   );
   console.log("EQZ Adapter deployed to:", eqzAdapter.address);
@@ -89,13 +89,13 @@ async function deploy_testnet() {
   const adapterId = 1;
   await handler.setPoolToAdapterId(mlpVault.address, adapterId);
   await handler.setAdapter(adapterId, "Mlp Strategy", 0, mlpAdapter.address, true);
-  await deepfiToken.transfer(mlpVault.address, ethers.utils.parseEther("1000000"))
+  // await deepfiToken.transfer(mlpVault.address, ethers.utils.parseEther("1000000"))
 
 
   const adapterId2 = 2;
   await handler.setPoolToAdapterId(eqzVault.address, adapterId2);
   await handler.setAdapter(adapterId2, "Eqz Strategy", 0, eqzAdapter.address, true);
-  await deepfiToken.transfer(eqzVault.address, ethers.utils.parseEther("1000000"))
+  // await deepfiToken.transfer(eqzVault.address, ethers.utils.parseEther("1000000"))
 }
 
 deploy_testnet()

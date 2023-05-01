@@ -54,14 +54,13 @@ contract IDeepFiERC20 is Initializable, ContextUpgradeable, IERC20Upgradeable, I
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    function __ERC20_init(string memory name_, string memory symbol_, uint256 totalSupply_) internal onlyInitializing {
-        __ERC20_init_unchained(name_, symbol_, totalSupply_);
+    function __ERC20_init(string memory name_, string memory symbol_) internal onlyInitializing {
+        __ERC20_init_unchained(name_, symbol_);
     }
 
-    function __ERC20_init_unchained(string memory name_, string memory symbol_, uint256 totalSupply_) internal onlyInitializing {
+    function __ERC20_init_unchained(string memory name_, string memory symbol_) internal onlyInitializing {
         _name = name_;
         _symbol = symbol_;
-        _totalSupply = totalSupply_;
     }
 
     /**
