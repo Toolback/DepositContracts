@@ -44,8 +44,9 @@ contract EqzAdapter is
     address public equal_token;
     address public treasury;
 
-    address public eqzGauge_address;
+    uint256 actualSupply;
 
+    address public eqzGauge_address;
     // bool public compoundRewardStatus;
 
     event removeToken(address indexed user, address indexed token, uint256 amount);
@@ -87,7 +88,7 @@ contract EqzAdapter is
         IGauge gauge = IGauge(eqzGauge_address);
         IERC20Upgradeable(stacking_token).approve(eqzGauge_address, _amount);
         gauge.deposit(_amount);
-        return;
+        actualSupply += _amount;
     }
 
     /**
@@ -104,6 +105,7 @@ contract EqzAdapter is
         gauge.withdraw(_full_amout);
         IERC20Upgradeable(_token).safeTransfer(_user, _deducted_amount);
         IERC20Upgradeable(_token).safeTransfer(treasury, _fees);
+        actualSupply -= _full_amout;
     }
 
     // /**
@@ -134,17 +136,22 @@ contract EqzAdapter is
         IERC20Upgradeable(equal_token).safeTransfer(treasury, rewardBal);
     }
 
-    // /**
-    //  * @notice  admin function for removing blocked funds from contract
-    //  * @param _address address of the token being removed
-    //  * @param _to address of the recipient
-    //  * @param _amount amount of the token being removed
-    //  */
-    // function removeTokenByAddress(address _address, address _to, uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE) 
-    // {
-    //     IERC20Upgradeable(_address).safeTransfer(_to, _amount);
-    //     emit removeToken(_to, _address, _amount);
-    // }
+    /**
+     * @notice  admin function for removing blocked funds from contract
+     * @param _token address of the token being removed
+     * @param _to address of the recipient
+     * @param _amount amount of the token being removed
+     */
+    function removeTokenByAddress(address _token, address _to, uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE) 
+    {
+        if(_token == stacking_token) {
+            IGauge gauge = IGauge(eqzGauge_address);
+            uint256 remaining = (gauge.balanceOf(address(this)) + IERC20Upgradeable(stacking_token).balanceOf(address(this))) - actualSupply;
+            require( _amount <= remaining, "Adapter : Cannot withdraw user funds");
+        }
+        IERC20Upgradeable(_token).safeTransfer(_to, _amount);
+        emit removeToken(_to, _token, _amount);
+    }
 
     /* ------------------------------ Total Rewards ------------------------------ */
 
