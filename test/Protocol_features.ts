@@ -21,11 +21,13 @@ let stakedGLP: any;
 let testToken6: any;
 let testToken18: any;
 
-let testVault6: any
-let testAdapter6: any
+let testVault6: any;
+let testAdapter6: any;
 
-let testVault18: any
-let testAdapter18: any
+let testVaultMulti: any;
+
+let testVault18: any;
+let testAdapter18: any;
 
 let initialBalance: String;
 let onGoingBal: String;
@@ -44,14 +46,24 @@ async function skipDays(d: number) {
   ethers.provider.send('evm_mine', []);
 }
 
+
 async function setReward(vault: any, duration?: number, amount?: BigNumber) {
   if (duration != undefined) {
     await vault.connect(owner).setRewardsDuration(duration);
   }
-
   if (amount != undefined) {
     await deepfiToken.connect(owner).approve(vault.address, amount)
     await vault.connect(owner).notifyRewardAmount(amount);
+  }
+}
+
+async function setMultiReward(vault: any, token:any, duration?: number, amount?: BigNumber) {
+  if (duration != undefined) {
+    await vault.connect(owner).setRewardsDuration(duration, token.address);
+  }
+  if (amount != undefined) {
+    await token.connect(owner).approve(vault.address, amount)
+    await vault.connect(owner).notifyRewardAmount(amount, token.address);
   }
 }
 
@@ -98,23 +110,20 @@ describe("🌞 Protocol Features Test", async () => {
 
     // Test Vault6
     const TESTVault6 = await ethers.getContractFactory("D_Vault_SingleReward");
-
     testVault6 = await upgrades.deployProxy(TESTVault6,
       //vault name, staking token, reward token, admin, handler, trusted forwarder
       ["test6", testToken6.address, deepfiToken.address, owner.address, handler.address],
       { initializer: 'initialize', kind: 'uups' }
     );
-
     // Test Adapter6
     const MLPAdapter6 = await ethers.getContractFactory("testAdapter");
-
     let testAdapter6 = await upgrades.deployProxy(MLPAdapter6,
       // treasury / handler / staking token / reward token / admin
       [owner.address, handler.address, testToken6.address, deepfiToken.address, owner.address],
       { initializer: 'initialize', kind: 'uups' }
     );
     // const adapterId = await handler.getLastAdapterIndex();
-    const adapterId = 2;
+    const adapterId = 3;
     await handler.connect(owner).setPoolToAdapterId(testVault6.address, adapterId);
     await handler.connect(owner).setAdapter(adapterId, "test Strategy 6 decimals", 0, testAdapter6.address, true);
     // await handler.grantRole(handler.DEFAULT_ADMIN_ROLE(), pool_usdc.address);
@@ -123,27 +132,42 @@ describe("🌞 Protocol Features Test", async () => {
 
     // Test Vault18
     const TESTVault18 = await ethers.getContractFactory("D_Vault_SingleReward");
-
     testVault18 = await upgrades.deployProxy(TESTVault18,
       //staking token, reward token, admin, handler, trusted forwarder
       ["test18", testToken18.address, deepfiToken.address, owner.address, handler.address],
       { initializer: 'initialize', kind: 'uups' }
     );
-
-    // Test Adapter18
     const TESTAdapter18 = await ethers.getContractFactory("testAdapter");
-
     let testAdapter18 = await upgrades.deployProxy(TESTAdapter18,
       // treasury / handler / staking token / reward token / admin
       [owner.address, handler.address, testToken18.address, deepfiToken.address, owner.address],
       { initializer: 'initialize', kind: 'uups' }
     );
-
     // const adapterId = await handler.getLastAdapterIndex();
-    const adapterId2 = 3;
-    await handler.connect(owner).setPoolToAdapterId(testVault18.address, adapterId);
+    const adapterId2 = 4;
+    await handler.connect(owner).setPoolToAdapterId(testVault18.address, adapterId2);
     await handler.connect(owner).setAdapter(adapterId2, "test Strategy 18 decimals", 0, testAdapter18.address, true);
     // await handler.grantRole(handler.DEFAULT_ADMIN_ROLE(), pool_usdc.address);
+  
+
+    // Test Multi Reward Vault
+    let rewardTokens = [deepfiToken.address, testToken18.address, testToken6.address]
+    const TESTVaultMulti = await ethers.getContractFactory("D_Vault_MultiRewards");
+    testVaultMulti = await upgrades.deployProxy(TESTVaultMulti,
+      //staking token, reward token, admin, handler, trusted forwarder
+      ["multiRewardVault", stakedGLP.address, rewardTokens, owner.address, handler.address],
+      { initializer: 'initialize', kind: 'uups' }
+    );
+    // const TESTAdapter18 = await ethers.getContractFactory("testAdapter");
+    // let testAdapter = await upgrades.deployProxy(TESTAdapter18,
+    //   // treasury / handler / staking token / reward token / admin
+    //   [owner.address, handler.address, testToken18.address, deepfiToken.address, owner.address],
+    //   { initializer: 'initialize', kind: 'uups' }
+    // );
+    // const adapterId = await handler.getLastAdapterIndex();
+    await handler.connect(owner).setPoolToAdapterId(testVaultMulti.address, 1);
+    // await handler.connect(owner).setAdapter(adapterId2, "test Strategy 18 decimals", 0, testAdapter18.address, true);
+
   })
 
   describe("🌱 Check Upgradeablility of Contracts ", async () => {
@@ -311,6 +335,68 @@ describe("🌞 Protocol Features Test", async () => {
       expect(Number(formatUnits(await deepfiToken.balanceOf(otherAccounts[1].address), 18))).is.above(99)
       expect(Number(formatUnits(await deepfiToken.balanceOf(otherAccounts[2].address), 18))).is.above(299)
       expect(Number(formatUnits(await deepfiToken.balanceOf(otherAccounts[3].address), 18))).is.above(499)
+    });
+  });
+
+
+
+  describe("🌱 Check Multi Rewards Vault", async () => {
+
+    it("Test 1 : 1 user staking 100% tvl on 1000 reward / 10 days", async () => {
+      await setMultiReward(testVaultMulti, deepfiToken, 864000, parseEther("1000"));
+      await setMultiReward(testVaultMulti, testToken18, 864000, parseEther("500"));
+      await setMultiReward(testVaultMulti, testToken6, 864000, parseUnits("300", 6));
+
+      await deposit(otherAccounts[0], stakedGLP, testVaultMulti, ethers.utils.parseUnits("100", 18));
+
+      await skipDays(15);
+      await testVaultMulti.connect(otherAccounts[0]).withdraw(parseUnits("100", 18));
+      await testVaultMulti.connect(otherAccounts[0]).claimReward();
+
+      expect(Number(formatUnits(await deepfiToken.balanceOf(otherAccounts[0].address), 18))).is.above(999)
+      expect(Number(formatUnits(await testToken18.balanceOf(otherAccounts[0].address), 18))).is.above(499)
+      expect(Number(formatUnits(await testToken6.balanceOf(otherAccounts[0].address), 6))).is.above(299)
+    });
+
+    it("Test 2 : 4 users staking 10/10/30/50% on 1000 reward", async () => {
+      await setMultiReward(testVaultMulti, deepfiToken, 864000, parseEther("1000"));
+      await setMultiReward(testVaultMulti, testToken18, 864000, parseEther("1000"));
+      await setMultiReward(testVaultMulti, testToken6, 864000, parseUnits("1000", 6));
+
+      await deposit(otherAccounts[0], stakedGLP, testVaultMulti, ethers.utils.parseUnits("100", 18));
+      await deposit(otherAccounts[1], stakedGLP, testVaultMulti, ethers.utils.parseUnits("100", 18));
+      await deposit(otherAccounts[2], stakedGLP, testVaultMulti, ethers.utils.parseUnits("300", 18));
+      await deposit(otherAccounts[3], stakedGLP, testVaultMulti, ethers.utils.parseUnits("500", 18));
+
+      await skipDays(15);
+
+      await testVaultMulti.connect(otherAccounts[0]).claimReward();
+      await testVaultMulti.connect(otherAccounts[1]).claimReward();
+      await testVaultMulti.connect(otherAccounts[2]).claimReward();
+      await testVaultMulti.connect(otherAccounts[3]).claimReward();
+
+      await testVaultMulti.connect(otherAccounts[0]).withdraw(parseUnits("100", 18));
+      await testVaultMulti.connect(otherAccounts[1]).withdraw(parseUnits("100", 18));
+      await testVaultMulti.connect(otherAccounts[2]).withdraw(parseUnits("300", 18));
+      await testVaultMulti.connect(otherAccounts[3]).withdraw(parseUnits("500", 18));
+
+      expect(Number(formatUnits(await deepfiToken.balanceOf(otherAccounts[0].address), 18))).is.above(99)
+      expect(Number(formatUnits(await deepfiToken.balanceOf(otherAccounts[1].address), 18))).is.above(99)
+      expect(Number(formatUnits(await deepfiToken.balanceOf(otherAccounts[2].address), 18))).is.above(299)
+      expect(Number(formatUnits(await deepfiToken.balanceOf(otherAccounts[3].address), 18))).is.above(499)
+    
+      expect(Number(formatUnits(await testToken18.balanceOf(otherAccounts[0].address), 18))).is.above(99)
+      expect(Number(formatUnits(await testToken18.balanceOf(otherAccounts[1].address), 18))).is.above(99)
+      expect(Number(formatUnits(await testToken18.balanceOf(otherAccounts[2].address), 18))).is.above(299)
+      expect(Number(formatUnits(await testToken18.balanceOf(otherAccounts[3].address), 18))).is.above(499)
+
+      expect(Number(formatUnits(await testToken6.balanceOf(otherAccounts[0].address), 6))).is.above(99)
+      expect(Number(formatUnits(await testToken6.balanceOf(otherAccounts[1].address), 6))).is.above(99)
+      expect(Number(formatUnits(await testToken6.balanceOf(otherAccounts[2].address), 6))).is.above(299)
+      expect(Number(formatUnits(await testToken6.balanceOf(otherAccounts[3].address), 6))).is.above(499)
+
+
+
     });
   });
 });
