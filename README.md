@@ -11,13 +11,15 @@ EQZ Vault deployed to: 0xAa076ebE72266A1d977e583cbe5244215A43cD12
 EQZ Adapter deployed to: 0xAE5257B5dd895027bE7C9263e810F5f9380AF7D7
 
 ## Fantom Mainnet
+[WIP]
 
-# WIP
-[] -> fix mintInterval of deepfi token (actual testing 365 days)
-[~] -> set withdraw fees on pools
-[~] -> run tests
-
+### Vault Rewards Distribution
 <img src="./VaultSchema.png" alt="Vault Schema"/>
+
+### Structure
+Deposits and withdrawals are made on the different vaults, which transfer the funds to the liquidity handler in order to dispatch them to the respective strategy (adapter)
+<img src="./Structure.png" alt="Protocol Structure"/>
+
 
 # D_Vault_SingleReward Contract
 [WIP]

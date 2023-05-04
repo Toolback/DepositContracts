@@ -278,7 +278,9 @@ contract LiquidityHandler is
 
     /**
      * @dev admin function for removing funds from contract
+     * @dev there are no user funds on this contract
      * @param _address address of the token being removed
+     * @param _to address of the recipient
      * @param _amount amount of the token being removed
      */
     function removeTokenByAddress(

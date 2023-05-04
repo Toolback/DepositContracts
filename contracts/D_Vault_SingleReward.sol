@@ -311,6 +311,7 @@ contract D_Vault_SingleReward is
 
     /**
      * @notice  admin function for removing blocked funds from contract
+     * @dev     there are no user funds on this contract
      * @param _address address of the token being removed
      * @param _to address of the recipient
      * @param _amount amount of the token being removed

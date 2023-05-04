@@ -317,11 +317,7 @@ contract D_Vault_MultiRewards is
     }
 
     function addRewardToken(address _rewardToken) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(
-            isReward[_rewardToken] == false
-            && rewardTokens[_rewardToken].rewardDuration == 0
-            , "Vault : Token already listed"
-        );
+        require(isReward[_rewardToken] == false && rewardTokens[_rewardToken].rewardDuration == 0, "Vault : Token already listed");
         require( _rewardToken != address(stakingToken), "Vault : Cannot use staking token as a reward");
         listedRewardTokens.push(_rewardToken);
         rewardTokens[_rewardToken].rewardDuration = 7 days;
@@ -330,6 +326,7 @@ contract D_Vault_MultiRewards is
 
     /**
      * @notice  admin function for removing blocked funds from contract
+     * @dev     there are no user funds on this contract
      * @param _address address of the token being removed
      * @param _to address of the recipient
      * @param _amount amount of the token being removed
