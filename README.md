@@ -23,7 +23,7 @@ Deposits and withdrawals are made on the different vaults, which transfer the fu
 
 # D_Vault_SingleReward Contract
 [WIP]
-The D_Vault_SingleReward contract is a decentralized finance (DeFi) vault contract that allows users to deposit and earn returns on their deposited assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
+The D_Vault_SingleReward standard vault contract that allows users to deposit and earn returns on their deposited assets. It is designed to be upgradeable, allowing for the implementation to be modified and improved over time.
 
 ## Features
 The D_Vault_SingleReward contract has the following features:
